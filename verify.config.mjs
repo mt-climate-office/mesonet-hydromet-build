@@ -4,7 +4,7 @@
 //   node tools/verify/axe-matrix.mjs --config ../mesonet-umrb-build/verify.config.mjs
 //   node tools/verify/keyboard.mjs   --config ../mesonet-umrb-build/verify.config.mjs
 // `root` resolves from the current directory, so it assumes that layout;
-// pass --root to override. The feed is LIVE (mesonet2.climate.umt.edu,
+// pass --root to override. The feed is LIVE (the API at app.js MESONET_ORIGIN,
 // cross-origin AirTable read) — the harness records no fixtures.
 
 // Render evidence: the sr-only twin is rebuilt from the same features

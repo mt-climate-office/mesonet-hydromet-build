@@ -39,6 +39,8 @@ Lists take spaces, `+` or commas. A parameter at its default is left out of the 
 ## Data
 
 - Station status: `GET https://mesonet2.climate.umt.edu/api/v2/stations/status/live?type=json`, read on every load. It is a live read of the AirTable "Station Status" view.
+- Dashboard links: `https://mesonet2.climate.umt.edu/dash/?s=<station id>`.
+- Cutover: change `MESONET_ORIGIN` in `app.js` and the CSP `connect-src` in `index.html`.
 - Overlays: FlatGeobuf files under `https://data.climate.umt.edu/mesonet/fgb/`, loaded when turned on.
 - Grid cells and the Montana outline: vendored in `data/`. `data/README.md` has the regeneration recipe.
 
@@ -51,8 +53,9 @@ npx html-validate@9 index.html
 # Browser harness. Installs are ephemeral, never committed.
 npm init -y && npm i --no-save playwright @axe-core/playwright
 npx playwright install chromium
+ORIGIN=$(sed -n "s/.*MESONET_ORIGIN = '\([^']*\)'.*/\1/p" app.js)
 mkdir -p fixtures && curl -fsS -o fixtures/status.json \
-  'https://mesonet2.climate.umt.edu/api/v2/stations/status/live?type=json'
+  "$ORIGIN/api/v2/stations/status/live?type=json"
 node consumer-verify.mjs
 
 # Kit harness, from an mco-web-style checkout beside this repo

@@ -17,14 +17,18 @@
   'use strict';
 
   // ── Constants ────────────────────────────────────────────────────────────
+  // The Mesonet host for the dashboard and the API. At the cutover this becomes
+  // 'https://mesonet.climate.umt.edu'. Change it here, and in the CSP and README.
+  const MESONET_ORIGIN = 'https://mesonet2.climate.umt.edu';
   // Absolute: this page is a static GitHub Pages site (proxied at
   // mesonet.climate.umt.edu/umrb/), so the API is always cross-origin. The
   // status feed is a live AirTable read that only the mesonet-db-rds API
   // serves; it answers with CORS `*`. The host must also appear in the meta
   // CSP connect-src in index.html.
-  const API_BASE   = 'https://mesonet2.climate.umt.edu/api/v2';
+  const API_BASE   = `${MESONET_ORIGIN}/api/v2`;
   const STATUS_URL = `${API_BASE}/stations/status/live?type=json`;
-  const DASH_URL   = (s) => `https://mesonet.climate.umt.edu/dash/${encodeURIComponent(s)}`;
+  const DASH_URL   = (s) => `${MESONET_ORIGIN}/dash/?s=${encodeURIComponent(s)}`;
+  const API_DOCS_URL = `${API_BASE}/docs`;
   const GRIDS_URL  = 'data/mt_grids_simple.geojson';
   const STATE_URL  = 'data/mt_state_simple.geojson';
 
@@ -282,6 +286,9 @@
       }
     }, 0);
   });
+  // The help's API link follows MESONET_ORIGIN rather than a static href.
+  Object.assign(document.getElementById('api-docs-link'),
+    { href: API_DOCS_URL, target: '_blank', rel: 'noopener' });
   document.getElementById('info-credit').textContent =
     MCO.credit({ source: 'Station status: MCO station registry' });
 
