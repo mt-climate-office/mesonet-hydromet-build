@@ -23,14 +23,15 @@ Storage keys migrates the old `mco-status-*` ones).
 
 ## Data
 
-One absolute API URL under `API_BASE` at the top of `app.js`
-(`https://mesonet2.climate.umt.edu/api/v2`): `/stations/status/live?type=json`,
+One absolute API URL under `API_BASE` at the top of `app.js`, derived from
+`MESONET_ORIGIN` (`https://mesonet2.climate.umt.edu`; the dashboard links and
+the help's API docs link derive from it too): `/stations/status/live?type=json`,
 a live read of the AirTable "Station Status" view served by the mesonet-db-rds
 API (`api/app/app/registry.py` there; 120 s cache, falls back to the synced
 stations table). The page is cross-origin to the API everywhere — GitHub Pages
 origin and the `mesonet.climate.umt.edu/umrb/` proxy alike — so `API_BASE` must
 also be listed in the meta CSP `connect-src`, and the API must keep answering
-with CORS `*`. If the API host changes, change both.
+with CORS `*`. If the host changes, change `MESONET_ORIGIN` and the CSP.
 
 Grid geometry (`data/mt_grids_simple.geojson`, 205 ACE cells keyed by `Cell`)
 and the Montana outline are vendored; `data/README.md` has the regeneration

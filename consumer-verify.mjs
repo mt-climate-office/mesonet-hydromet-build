@@ -9,8 +9,9 @@
    unseen); its dependencies and fixtures/ stay out of git:
      npm init -y && npm i --no-save playwright @axe-core/playwright
      npx playwright install chromium
+     ORIGIN=$(node -p "require('fs').readFileSync('app.js','utf8').match(/MESONET_ORIGIN = '([^']+)'/)[1]")
      mkdir -p fixtures && curl -fsS -o fixtures/status.json \
-       'https://mesonet2.climate.umt.edu/api/v2/stations/status/live?type=json'
+       "$ORIGIN/api/v2/stations/status/live?type=json"
    Then: node consumer-verify.mjs
 */
 import { createServer } from 'node:http';
@@ -44,7 +45,10 @@ const CONFIG = {
    free to change. fixtures/status.json is a verbatim capture of
    <API_BASE>/stations/status/live?type=json — refresh it with curl when the
    buildout moves. Gitignored: GitHub Pages serves everything committed. */
-const API_BASE = 'https://mesonet2.climate.umt.edu/api/v2';
+// Read from app.js, so the harness follows the one MESONET_ORIGIN constant.
+const MESONET_ORIGIN = (await readFile(join(process.cwd(), 'app.js'), 'utf8'))
+  .match(/const MESONET_ORIGIN = '([^']+)'/)[1];
+const API_BASE = `${MESONET_ORIGIN}/api/v2`;
 const FIXTURES = {
   [`${API_BASE}/stations/status/live`]: 'fixtures/status.json',
 };
