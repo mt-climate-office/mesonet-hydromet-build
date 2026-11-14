@@ -492,38 +492,38 @@
     <div class="info-modal-header">
       <div>
         <h2 class="info-modal-title" id="info-modal-title">UMRB Build Status</h2>
-        <div class="info-modal-subtitle">Mesonet buildout across the Upper Missouri River Basin</div>
       </div>
       <button type="button" class="modal-close" aria-label="Close" data-close-modal>×</button>
     </div>
 
     <div class="info-section">
       <h3>What this shows</h3>
-      <p>The Upper Missouri River Basin is divided into <strong>ACE grid cells</strong>, each sized to hold one Mesonet station. A cell is shaded by how far along its station is: <strong>operational</strong>, <strong>scheduled</strong> for a given install year, <strong>under construction</strong>, or still <strong>available</strong>. Dots — white on the dark themes, near-black on the light one — mark the actual station locations. Cell assignments are provisional and change as siting work proceeds.</p>
+      <p>The Upper Missouri River Basin, split into grid cells that each hold one Mesonet station. Each cell is shaded by how far along its station is.</p>
+      <ul>
+        <li><strong>Installation pending:</strong> the site is under contract.</li>
+        <li><strong>Available cell:</strong> no station assigned yet.</li>
+      </ul>
     </div>
 
     <div class="info-section">
       <h3>How to use it</h3>
       <ul>
-        <li><strong>Search</strong> — press <kbd>/</kbd> to jump there; <kbd>↑</kbd>/<kbd>↓</kbd> + <kbd>Enter</kbd> to pick.</li>
-        <li><strong>Legend</strong> — click a row to hide a status; double-click (or <kbd>Shift</kbd>+<kbd>Enter</kbd>) to isolate it.</li>
-        <li><strong>Layers</strong> — chips toggle station dots and the county / watershed / tribal-land reference overlays.</li>
-        <li><strong>Hover</strong> a cell for its status; <strong>click</strong> it, or a station dot, to open its details beside the map (full screen on a phone), with a dashboard link.</li>
-        <li>The tag button toggles <strong>grid cell labels</strong>; the theme button steps dark → light → high contrast.</li>
-        <li><kbd>Esc</kbd>, × or the browser's <strong>Back</strong> button closes the details.</li>
-        <li>On a phone, <strong>☰</strong> opens the menu with search, the layers, the buttons and the legend; the <strong>Legend</strong> button on the map opens it at the legend.</li>
-        <li>Single-key shortcuts get in the way of speech input: add <code>?kbd=off</code> to the URL to turn <kbd>/</kbd> off.</li>
+        <li>Search for a station by name, ID or cell.</li>
+        <li>Tap a cell or station dot for its details.</li>
+        <li>Tap a legend row to hide that status. Double-tap to show only it.</li>
+        <li>Use <strong>Stations</strong>, <strong>Tribal lands</strong>, <strong>Counties</strong> and <strong>Watersheds</strong> to show or hide layers.</li>
+        <li>Keys: <kbd>/</kbd> search, <kbd>Esc</kbd> close. Add <code>?kbd=off</code> to the address to turn off <kbd>/</kbd>.</li>
       </ul>
     </div>
 
     <div class="info-section">
       <h3>Share or bookmark</h3>
-      <p>The URL reflects every choice — copy it from the address bar. <code>?cell=&lt;id&gt;</code> deep-links a grid cell and <code>?station=&lt;id&gt;</code> a station.</p>
+      <p>The address holds this view. Copy it to share.</p>
     </div>
 
     <div class="info-section">
       <h3>Data</h3>
-      <p>Station status is read live from the Montana Climate Office station registry on every load. Grid geometry is packaged with this page; county, watershed, and tribal-land overlays stream from the <a href="https://data.climate.umt.edu/mesonet/" target="_blank" rel="noopener">MCO data service</a> when you turn them on. The “Updated” time in the bar is when the status was last read.</p>
+      <p>Station status from the <a href="https://mesonet2.climate.umt.edu/api/v2/docs" target="_blank" rel="noopener">Montana Mesonet API</a>, read when the page loads. Overlays from the <a href="https://data.climate.umt.edu/mesonet/" target="_blank" rel="noopener">MCO data service</a>.</p>
       <!-- MCO.credit() fills this (app.js): the one credit wording. -->
       <p id="info-credit">Montana Climate Office · climate.umt.edu</p>
     </div>
