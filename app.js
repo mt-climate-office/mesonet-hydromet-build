@@ -1649,12 +1649,25 @@
   let zoomFloor = null;
   let coloc = null;
   function initMap() {
-    map = new maplibregl.Map({
-      container: 'map',
-      style: MCO.map.cartoStyleUrl(),
-      ...MCO.map.initialCamera(urlParams),
-    });
-    MCO.map.addNavigation(map);                 // zoom buttons, no compass
+    try {
+      map = new maplibregl.Map({
+        container: 'map',
+        style: MCO.map.cartoStyleUrl(),
+        ...MCO.map.initialCamera(urlParams),
+      });
+    } catch (err) {
+      // MapLibre 6 needs WebGL2: its constructor throws
+      // GPUInitializationError without it. Any later error is a bug, and
+      // reaches the console rather than this message.
+      console.error(err);
+      MCO.ready();
+      MCO.notice({
+        tone: 'danger', text: 'The map could not start. It needs a browser with WebGL2.',
+        container: document.getElementById('map-container'), place: 'over',
+      });
+      return;
+    }
+    MCO.map.addNavigation(map);                // zoom buttons, no compass
     MCO.map.addFitControl(map);
 
     // ── Map event wiring ─────────────────────────────────────────────────────
@@ -1758,16 +1771,7 @@
     });
   }
   function bootMap() {
-    MCO.map.loadMapLibre().then(initMap, onMapLibreFail).catch((err) => {
-      // The library loaded but the map could not start — MapLibre 6 needs
-      // WebGL2 and throws GPUInitializationError without it.
-      console.error(err);
-      MCO.ready();
-      MCO.notice({
-        tone: 'danger', text: 'The map could not start. It needs a browser with WebGL2.',
-        container: document.getElementById('map-container'), place: 'over',
-      });
-    });
+    MCO.map.loadMapLibre().then(initMap, onMapLibreFail);
   }
 
   // ── Boot ─────────────────────────────────────────────────────────────────
