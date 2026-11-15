@@ -848,8 +848,10 @@
 
   // Stream a .fgb into a FeatureCollection. flatgeobuf.deserialize yields one
   // GeoJSON feature at a time off the response body.
+  // The same 60 s limit as MCO.fetchJSON, which cannot be used here because
+  // it parses JSON; the signal also ends a stalled body stream.
   async function fetchOverlay(o) {
-    const res = await fetch(o.url);
+    const res = await fetch(o.url, { signal: AbortSignal.timeout(60000) });
     if (!res.ok) throw new Error(`${o.label} fetch failed (${res.status})`);
     const features = [];
     for await (const f of flatgeobuf.deserialize(res.body)) features.push(f);
