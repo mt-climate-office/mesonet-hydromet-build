@@ -643,60 +643,19 @@
   }
 
   async function loadAll() {
+    // Only the fetch is guarded: a render error is a bug, not a data failure,
+    // and goes to the console as one.
+    let grids, status;
     try {
-      const [grids, status] = await Promise.all([
+      [grids, status] = await Promise.all([
         _gridsFC ? Promise.resolve(_gridsFC) : MCO.fetchJSON(GRIDS_URL),
         fetchStatus().catch(() => null),
       ]);
-      _gridsFC = grids;
-
-      const rows = Array.isArray(status) ? status : [];
-      dataUnavailable = rows.length === 0;
-      stations = rows;
-      if (dataUnavailable) {
-        showDataNotice('warning', 'Station status unavailable',
-          'Showing the grid without status.');
-      } else {
-        closeDataNotice();
-      }
-
-      indexData();
-      populateSearch();
-      rebuildCells();
-      applyAllFilters();
-      renderLegend();
-      // No status rows means nothing was updated, so the stamp must not say so.
-      if (dataUnavailable) refreshStampEl.textContent = 'Not updated';
-      else refreshStamp();
-      MCO.ready();   // first meaningful state: the grid is shaded (idempotent)
-
-      // Deep-link from ?cell=… / ?station=… . loadAll() only runs after the
-      // map's first style.load, so the layers always exist by this point.
-      // ?station= opens the station itself; ?cell= opens the cell. Resolving a
-      // station down to its cell (the old behaviour) lost the distinction and
-      // dropped any station whose ace_grid is not in the drawn grid.
-      // The kit's flyToAndOpen waits for the map to be idle with the target
-      // in view; this page used to open on the first moveend, which under
-      // reduced motion fired before it was listened for, so the link zoomed,
-      // opened nothing, and lost ?station= from the URL. With a camera in the
-      // link (lng/lat/zoom) it keeps that camera, and opens without moving
-      // when the target is in view. url 'replace': the link's history entry
-      // is the page's own, so closing must never step Back off the site.
-      const zoom = _hasInitPos ? map.getZoom() : SEARCH_FLY_ZOOM;
-      if (!_deepLinkConsumed && _initStation && stationById.has(_initStation)) {
-        _deepLinkConsumed = true;
-        flyToStation(_initStation, { url: 'replace', zoom });
-      } else if (!_deepLinkConsumed && _initCell && cellById.has(_initCell)) {
-        _deepLinkConsumed = true;
-        flyToCell(_initCell, { url: 'replace', zoom });
-      } else {
-        // Push initial URL so it's clean even if the user hasn't interacted yet
-        pushState();
-      }
     } catch (err) {
       console.error(err);
       dataUnavailable = true;
       showDataNotice('danger', 'Error', `The map data failed to load (${err.message}).`);
+      refreshStampEl.textContent = 'Not updated';
       // Still render whatever we have — an unshaded grid is better than nothing.
       indexData();
       populateSearch();
@@ -704,6 +663,52 @@
       applyAllFilters();
       renderLegend();
       MCO.ready();
+      return;
+    }
+    _gridsFC = grids;
+
+    const rows = Array.isArray(status) ? status : [];
+    dataUnavailable = rows.length === 0;
+    stations = rows;
+    if (dataUnavailable) {
+      showDataNotice('warning', 'Station status unavailable',
+        'Showing the grid without status.');
+    } else {
+      closeDataNotice();
+    }
+
+    indexData();
+    populateSearch();
+    rebuildCells();
+    applyAllFilters();
+    renderLegend();
+    // No status rows means nothing was updated, so the stamp must not say so.
+    if (dataUnavailable) refreshStampEl.textContent = 'Not updated';
+    else refreshStamp();
+    MCO.ready();   // first meaningful state: the grid is shaded (idempotent)
+
+    // Deep-link from ?cell=… / ?station=… . loadAll() only runs after the
+    // map's first style.load, so the layers always exist by this point.
+    // ?station= opens the station itself; ?cell= opens the cell. Resolving a
+    // station down to its cell (the old behaviour) lost the distinction and
+    // dropped any station whose ace_grid is not in the drawn grid.
+    // The kit's flyToAndOpen waits for the map to be idle with the target
+    // in view; this page used to open on the first moveend, which under
+    // reduced motion fired before it was listened for, so the link zoomed,
+    // opened nothing, and lost ?station= from the URL. With a camera in the
+    // link (lng/lat/zoom) it keeps that camera, and opens without moving
+    // when the target is in view. url 'replace': the link's history entry
+    // is the page's own, so closing must never step Back off the site.
+    const zoom = _hasInitPos ? map.getZoom() : SEARCH_FLY_ZOOM;
+    if (!_deepLinkConsumed && _initStation && stationById.has(_initStation)) {
+      _deepLinkConsumed = true;
+      flyToStation(_initStation, { url: 'replace', zoom });
+    } else if (!_deepLinkConsumed && _initCell && cellById.has(_initCell)) {
+      _deepLinkConsumed = true;
+      flyToCell(_initCell, { url: 'replace', zoom });
+    } else {
+      // Push initial URL so it's clean even if the user hasn't interacted yet
+      pushState();
     }
   }
   // Only consume the deep link once (initial load); Refresh shouldn't refly.
