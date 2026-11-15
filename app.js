@@ -665,7 +665,9 @@
       rebuildCells();
       applyAllFilters();
       renderLegend();
-      refreshStamp();
+      // No status rows means nothing was updated, so the stamp must not say so.
+      if (dataUnavailable) refreshStampEl.textContent = 'Not updated';
+      else refreshStamp();
       MCO.ready();   // first meaningful state: the grid is shaded (idempotent)
 
       // Deep-link from ?cell=… / ?station=… . loadAll() only runs after the
