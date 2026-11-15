@@ -121,6 +121,20 @@ export default {
     const k = await open('?kbd=off');
     check('?kbd=off sticks in the URL', await k.page.evaluate(() => /kbd=off/.test(location.search)));
     await k.close();
+    // A failed load must not leave the stamp on "Updated …" or "Loading…".
+    const stamp = (p) => p.evaluate(() => document.getElementById('refresh-stamp').textContent);
+    const f = await open('', { ready: () => document.querySelectorAll('#sr-cell-rows tr').length >= 200 });
+    await f.ctx.route('**/stations/status/live**', (r) => r.fulfill({ status: 500, body: '' }));
+    await f.page.click('#btn-refresh');
+    await f.page.waitForFunction(() => document.querySelector('.mco-notice'), null, { timeout: 10000 }).catch(() => {});
+    check('status feed fails on Refresh: stamp says "Not updated"', (await stamp(f.page)) === 'Not updated', await stamp(f.page));
+    await f.ctx.route('**/data/mt_grids_simple.geojson', (r) => r.fulfill({ status: 500, body: '' }));
+    await f.page.reload();
+    await f.page.waitForFunction(() => /failed to load/.test(document.querySelector('.mco-notice')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
+    await f.page.click('#btn-refresh');
+    await f.page.waitForTimeout(2000);
+    check('grid fetch fails, then Refresh: stamp says "Not updated"', (await stamp(f.page)) === 'Not updated', await stamp(f.page));
+    await f.close();
     // No horizontal overflow at 320px (touch): the page must not scroll
     // sideways (WebKit) or widen its layout viewport past the device width
     // (Chromium mobile grows innerWidth instead of scrolling), so both are
