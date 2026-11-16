@@ -643,58 +643,19 @@
   }
 
   async function loadAll() {
+    // Only the fetch is guarded: a render error is a bug, not a data failure,
+    // and goes to the console as one.
+    let grids, status;
     try {
-      const [grids, status] = await Promise.all([
+      [grids, status] = await Promise.all([
         _gridsFC ? Promise.resolve(_gridsFC) : MCO.fetchJSON(GRIDS_URL),
         fetchStatus().catch(() => null),
       ]);
-      _gridsFC = grids;
-
-      const rows = Array.isArray(status) ? status : [];
-      dataUnavailable = rows.length === 0;
-      stations = rows;
-      if (dataUnavailable) {
-        showDataNotice('warning', 'Station status unavailable',
-          'Showing the grid without status.');
-      } else {
-        closeDataNotice();
-      }
-
-      indexData();
-      populateSearch();
-      rebuildCells();
-      applyAllFilters();
-      renderLegend();
-      refreshStamp();
-      MCO.ready();   // first meaningful state: the grid is shaded (idempotent)
-
-      // Deep-link from ?cell=… / ?station=… . loadAll() only runs after the
-      // map's first style.load, so the layers always exist by this point.
-      // ?station= opens the station itself; ?cell= opens the cell. Resolving a
-      // station down to its cell (the old behaviour) lost the distinction and
-      // dropped any station whose ace_grid is not in the drawn grid.
-      // The kit's flyToAndOpen waits for the map to be idle with the target
-      // in view; this page used to open on the first moveend, which under
-      // reduced motion fired before it was listened for, so the link zoomed,
-      // opened nothing, and lost ?station= from the URL. With a camera in the
-      // link (lng/lat/zoom) it keeps that camera, and opens without moving
-      // when the target is in view. url 'replace': the link's history entry
-      // is the page's own, so closing must never step Back off the site.
-      const zoom = _hasInitPos ? map.getZoom() : SEARCH_FLY_ZOOM;
-      if (!_deepLinkConsumed && _initStation && stationById.has(_initStation)) {
-        _deepLinkConsumed = true;
-        flyToStation(_initStation, { url: 'replace', zoom });
-      } else if (!_deepLinkConsumed && _initCell && cellById.has(_initCell)) {
-        _deepLinkConsumed = true;
-        flyToCell(_initCell, { url: 'replace', zoom });
-      } else {
-        // Push initial URL so it's clean even if the user hasn't interacted yet
-        pushState();
-      }
     } catch (err) {
       console.error(err);
       dataUnavailable = true;
-      showDataNotice('danger', 'Error', `The map data failed to load (${err.message}).`);
+      showDataNotice('danger', 'Error', 'The map data failed to load.');
+      refreshStampEl.textContent = 'Data unavailable';
       // Still render whatever we have — an unshaded grid is better than nothing.
       indexData();
       populateSearch();
@@ -702,6 +663,52 @@
       applyAllFilters();
       renderLegend();
       MCO.ready();
+      return;
+    }
+    _gridsFC = grids;
+
+    const rows = Array.isArray(status) ? status : [];
+    dataUnavailable = rows.length === 0;
+    stations = rows;
+    if (dataUnavailable) {
+      showDataNotice('warning', 'Station status unavailable',
+        'Showing the grid without status.');
+    } else {
+      closeDataNotice();
+    }
+
+    indexData();
+    populateSearch();
+    rebuildCells();
+    applyAllFilters();
+    renderLegend();
+    // No status rows means nothing was updated, so the stamp must not say so.
+    if (dataUnavailable) refreshStampEl.textContent = 'Data unavailable';
+    else refreshStamp();
+    MCO.ready();   // first meaningful state: the grid is shaded (idempotent)
+
+    // Deep-link from ?cell=… / ?station=… . loadAll() only runs after the
+    // map's first style.load, so the layers always exist by this point.
+    // ?station= opens the station itself; ?cell= opens the cell. Resolving a
+    // station down to its cell (the old behaviour) lost the distinction and
+    // dropped any station whose ace_grid is not in the drawn grid.
+    // The kit's flyToAndOpen waits for the map to be idle with the target
+    // in view; this page used to open on the first moveend, which under
+    // reduced motion fired before it was listened for, so the link zoomed,
+    // opened nothing, and lost ?station= from the URL. With a camera in the
+    // link (lng/lat/zoom) it keeps that camera, and opens without moving
+    // when the target is in view. url 'replace': the link's history entry
+    // is the page's own, so closing must never step Back off the site.
+    const zoom = _hasInitPos ? map.getZoom() : SEARCH_FLY_ZOOM;
+    if (!_deepLinkConsumed && _initStation && stationById.has(_initStation)) {
+      _deepLinkConsumed = true;
+      flyToStation(_initStation, { url: 'replace', zoom });
+    } else if (!_deepLinkConsumed && _initCell && cellById.has(_initCell)) {
+      _deepLinkConsumed = true;
+      flyToCell(_initCell, { url: 'replace', zoom });
+    } else {
+      // Push initial URL so it's clean even if the user hasn't interacted yet
+      pushState();
     }
   }
   // Only consume the deep link once (initial load); Refresh shouldn't refly.
@@ -841,8 +848,10 @@
 
   // Stream a .fgb into a FeatureCollection. flatgeobuf.deserialize yields one
   // GeoJSON feature at a time off the response body.
+  // The same 60 s limit as MCO.fetchJSON, which cannot be used here because
+  // it parses JSON; the signal also ends a stalled body stream.
   async function fetchOverlay(o) {
-    const res = await fetch(o.url);
+    const res = await fetch(o.url, { signal: AbortSignal.timeout(60000) });
     if (!res.ok) throw new Error(`${o.label} fetch failed (${res.status})`);
     const features = [];
     for await (const f of flatgeobuf.deserialize(res.body)) features.push(f);
@@ -1642,12 +1651,26 @@
   let zoomFloor = null;
   let coloc = null;
   function initMap() {
-    map = new maplibregl.Map({
-      container: 'map',
-      style: MCO.map.cartoStyleUrl(),
-      ...MCO.map.initialCamera(urlParams),
-    });
-    MCO.map.addNavigation(map);                 // zoom buttons, no compass
+    try {
+      map = new maplibregl.Map({
+        container: 'map',
+        style: MCO.map.cartoStyleUrl(),
+        ...MCO.map.initialCamera(urlParams),
+      });
+    } catch (err) {
+      // MapLibre 6 needs WebGL2: its constructor throws
+      // GPUInitializationError without it. Any later error is a bug, and
+      // gets the plainer notice in bootMap() rather than this message.
+      console.error(err);
+      MCO.ready();
+      refreshStampEl.textContent = 'Data unavailable';
+      MCO.notice({
+        tone: 'danger', text: 'The map could not start. It needs a browser with WebGL2.',
+        container: document.getElementById('map-container'), place: 'over',
+      });
+      return;
+    }
+    MCO.map.addNavigation(map);                // zoom buttons, no compass
     MCO.map.addFitControl(map);
 
     // ── Map event wiring ─────────────────────────────────────────────────────
@@ -1744,6 +1767,7 @@
   function onMapLibreFail(err) {
     console.error(err);
     MCO.ready();
+    refreshStampEl.textContent = 'Data unavailable';
     const n = MCO.notice({
       tone: 'danger', text: 'The map library failed to load.',
       container: document.getElementById('map-container'), place: 'over',
@@ -1752,12 +1776,11 @@
   }
   function bootMap() {
     MCO.map.loadMapLibre().then(initMap, onMapLibreFail).catch((err) => {
-      // The library loaded but the map could not start — MapLibre 6 needs
-      // WebGL2 and throws GPUInitializationError without it.
       console.error(err);
       MCO.ready();
+      refreshStampEl.textContent = 'Data unavailable';
       MCO.notice({
-        tone: 'danger', text: 'The map could not start. It needs a browser with WebGL2.',
+        tone: 'danger', text: 'The map could not start.',
         container: document.getElementById('map-container'), place: 'over',
       });
     });
