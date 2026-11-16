@@ -7,26 +7,36 @@ overlays are *not* vendored — they stream from
 
 ## `mt_grids_simple.geojson`
 
-The ACE grid cells, derived from the canonical FlatGeobuf:
+The Montana ACE grid cells, cut from the basin-wide grid
+`data/umrb-ace-grid.geojson` in the sibling
+[umrb-ace](https://github.com/mt-climate-office/umrb-ace) repo (540 cells across
+MT, WY, ND, SD and NE, with `Cell` and `State` properties). Only `State = 'MT'`
+is kept, and only the `Cell` property. Run from a directory beside both repos:
 
 ```sh
-curl -O https://data.climate.umt.edu/mesonet/fgb/mt_grids.fgb
 ogr2ogr -f GeoJSON -lco COORDINATE_PRECISION=5 -lco RFC7946=YES \
-  mt_grids_raw.geojson mt_grids.fgb
+  -where "State = 'MT'" -select Cell \
+  mt_grids_raw.geojson ../umrb-ace/data/umrb-ace-grid.geojson
 # -target 1 selects the polygon layer; RFC7946 conversion emits two stray
 # polyline records that mapshaper would otherwise write to a second file.
-mapshaper -i mt_grids_raw.geojson -target 1 \
+npx mapshaper@0.7.101 -i mt_grids_raw.geojson -target 1 \
   -simplify visvalingam 5% keep-shapes \
   -o precision=0.00001 format=geojson mt_grids_simple.geojson
 ```
 
-205 cells, ~356 KB (~79 KB gzipped). Most cells are simple quads; the size comes
+205 cells, ~358 KB (~80 KB gzipped). Most cells are simple quads; the size comes
 from the handful clipped to the basin boundary. 5% simplification is well below
 what is visible at this map's zoom range — drop it further only if the clipped
-edges start to matter.
+edges start to matter. mapshaper reports 7 self-intersections it cannot repair;
+two cells end up technically invalid, which MapLibre draws without complaint.
 
-Regenerate whenever the ACE grid itself changes. The page keys cells by the
-`Cell` property (`H-8` style, unpadded).
+Regenerate whenever the umrb-ace grid changes. The page keys cells by the
+`Cell` property (`H-8` style, unpadded), which is also the registry's
+`ace_grid` format.
+
+Earlier versions were cut from `https://data.climate.umt.edu/mesonet/fgb/mt_grids.fgb`
+(last modified 2023-09-22). That file is out of date: it has a `J-13` the
+current grid dropped, and lacks the `E-9` that `acesfork` sits in.
 
 ## `mt_state_simple.geojson`
 

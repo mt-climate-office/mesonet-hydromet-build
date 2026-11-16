@@ -85,14 +85,16 @@ const browser = await chromium.launch();
 
 /* Every browser context goes through here so the cross-origin API is answered
    from fixtures/ instead of the network — including the app-specific blocks
-   below that open their own contexts rather than using open(). */
-async function newContext(opts) {
+   below that open their own contexts rather than using open(). `feed`, if
+   given, rewrites the parsed status feed for one scenario. */
+async function newContext(opts, feed) {
   const ctx = await browser.newContext(opts);
   await ctx.route(`${API_BASE}/**`, async (route) => {
     const fx = fixtureFor(route.request().url());
     if (!fx) return route.continue();
-    route.fulfill({ status: 200, contentType: 'application/json',
-                    body: await readFile(join(CONFIG.root, fx)) });
+    let body = await readFile(join(CONFIG.root, fx));
+    if (feed) body = JSON.stringify(feed(JSON.parse(body)));
+    route.fulfill({ status: 200, contentType: 'application/json', body });
   });
   return ctx;
 }
@@ -114,8 +116,8 @@ const EXPECTED_CONSOLE = [
 const realErrors = (errors) =>
   errors.filter((e) => !EXPECTED_CONSOLE.some((re) => re.test(e)));
 
-async function open({ query = '', viewport = { width: 1440, height: 900 } } = {}) {
-  const ctx = await newContext({ viewport });
+async function open({ query = '', viewport = { width: 1440, height: 900 }, feed } = {}) {
+  const ctx = await newContext({ viewport }, feed);
   await ctx.addInitScript((kv) => {
     for (const [k, v] of Object.entries(kv)) localStorage.setItem(k, v);
   }, CONFIG.initLocalStorage);
@@ -286,18 +288,22 @@ for (const theme of CONFIG.themes) {
    that has to hold for the station whose ace_grid names no drawn cell — the
    case that used to dead-end because the handler resolved through cellById.
    The detail is the kit's panel (.mco-sheet, MCO.initSheet) at every width
-   since kit 0.21.0, which retired the anchored MapLibre popup. */
+   since kit 0.21.0, which retired the anchored MapLibre popup.
+   The grid now draws every cell the registry names, so no real orphan exists:
+   this scenario points acesfork at a cell that cannot exist (Z-99). */
 const detailText = () => {
   const el = document.querySelector('.mco-sheet');
   return el && !el.hidden && el.dataset.state !== 'closed' ? el.innerText : null;
 };
 {
-  const { ctx, page } = await open({ query: '?station=acesfork' });
+  const orphan = (rows) => rows.map((r) =>
+    r.station === 'acesfork' ? { ...r, ace_grid: 'Z-99' } : r);
+  const { ctx, page } = await open({ query: '?station=acesfork', feed: orphan });
   await page.waitForFunction(detailText, null, { timeout: 20000 }).catch(() => {});
   const popup = await page.evaluate(detailText);
   check('orphaned station opens the detail panel', popup !== null, String(popup));
   check('orphan detail names the missing cell',
-    !!popup && /E-9/.test(popup) && /not in this map's grid/i.test(popup),
+    !!popup && /\bZ-99\b/.test(popup) && /not in this map's grid/i.test(popup),
     String(popup).slice(0, 160));
   check('?station= round-trips in the URL', page.url().includes('station=acesfork'), page.url());
   await page.screenshot({ path: `${CONFIG.screenshotDir}/station-orphan.png` });
