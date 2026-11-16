@@ -58,8 +58,13 @@
   // These categories are not seven unrelated things — they are one ordered
   // progression, from a cell nobody has claimed to a station that is running:
   //
-  //   available → pending 2027 → install 2026 → contracted
-  //             → ground game → structure → operational
+  //   available → pending (next-but-one season) → install (next season)
+  //             → contracted → ground game → structure → operational
+  //
+  // After the 2026 season, candidate-27 moved up into the install slot as
+  // "Install 2027" and candidate-26 was dropped. The pending slot (brown) is
+  // empty until a later year's candidates need it ("Pending 2028" would take
+  // #8b5308 / #b2742a, the hexes "Pending 2027" used).
   //
   // So they get one ramp rather than seven hand-picked hues: Fabio Crameri's
   // `roma`, from the Scientific colour maps, sampled at seven even positions.
@@ -106,8 +111,7 @@
         { key: 'active',       light: '#001e8d', dark: '#1b47aa', label: 'Operational' },
         { key: 'building',     light: '#0481ab', dark: '#44a5d0', label: 'Build in progress' },
         { key: 'contracted',   light: '#97c09b', dark: '#c0ebc4', label: 'Installation pending' },
-        { key: 'candidate-26', light: '#a69338', dark: '#ceb95a', label: 'Install 2026' },
-        { key: 'candidate-27', light: '#8b5308', dark: '#b2742a', label: 'Pending 2027' },
+        { key: 'candidate-27', light: '#a69338', dark: '#ceb95a', label: 'Install 2027' },
         { key: 'unassigned',   light: '#690500', dark: '#95290d', label: 'Available cell' },
       ],
     },
@@ -117,8 +121,7 @@
         { key: 'structures',   light: '#0065a1', dark: '#3887c5', label: 'Station structure complete' },
         { key: 'ground',       light: '#37a0b2', dark: '#64c7d9', label: 'Ground game complete' },
         { key: 'contracted',   light: '#97c09b', dark: '#c0ebc4', label: 'Installation pending' },
-        { key: 'candidate-26', light: '#a69338', dark: '#ceb95a', label: 'Install 2026' },
-        { key: 'candidate-27', light: '#8b5308', dark: '#b2742a', label: 'Pending 2027' },
+        { key: 'candidate-27', light: '#a69338', dark: '#ceb95a', label: 'Install 2027' },
         { key: 'unassigned',   light: '#690500', dark: '#95290d', label: 'Available cell' },
       ],
     },
@@ -126,7 +129,8 @@
   const VIEW_NAMES = Object.keys(VIEWS);
 
   // Registry `status` → category key. Everything not listed (inactive,
-  // decommissioned, pending, or no station at all) falls through to
+  // decommissioned, pending, the retired candidate-26, or no station at all)
+  // falls through to
   // 'unassigned', i.e. the cell is available — same rule as the Leaflet map.
   function categoryFor(status, view) {
     switch (status) {
@@ -134,7 +138,6 @@
       case 'contracted':   return 'contracted';
       case 'ground':       return view === 'internal' ? 'ground'     : 'building';
       case 'structures':   return view === 'internal' ? 'structures' : 'building';
-      case 'candidate-26': return 'candidate-26';
       case 'candidate-27': return 'candidate-27';
       default:             return 'unassigned';
     }
