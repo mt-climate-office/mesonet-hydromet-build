@@ -198,6 +198,13 @@ export default {
     check('844×390: rail order badge → ☰ → search, buttons ≥ 44px', r1.order && r1.sizes.every(([w, h]) => w >= 44 && h >= 44), JSON.stringify(r1.sizes));
     check('844×390: ☰ and search hit-testable', (await hit(ra.page, '#btn-rail-menu')) && (await hit(ra.page, '#btn-search-toggle')));
     check('844×390: no control bar (no time controls)', !r1.controlbar);
+    // Bar tools in the rail: help in the column, theme in the "Page tools"
+    // row at the top of the drawer.
+    check('844×390: help in the rail, theme in the drawer\'s "Page tools" row', await ra.page.evaluate(() => {
+      const row = document.querySelector('#nav-drawer > .mco-drawer-tools:first-child');
+      return !!document.querySelector('.mco-bar-tools #btn-info') && !!row
+        && row.getAttribute('aria-label') === 'Page tools' && row.contains(document.getElementById('btn-theme'));
+    }));
     await ra.page.click('#btn-rail-menu');
     await ra.page.waitForFunction(() => document.getElementById('nav-drawer').classList.contains('is-open'), null, { timeout: 5000 });
     // Measured once the slide-in has finished: mid-transition the drawer is
@@ -238,6 +245,10 @@ export default {
     });
     check('390×844: Legend button on the map, legend in the drawer\'s last group', l1.btn && l1.inSlot && l1.name === 'Legend', JSON.stringify(l1));
     check('390×844: Legend button hit-testable', await hit(lp.page, '.mco-legend-btn'));
+    // Bar tools on a phone: both fit the one-row bar.
+    check('390×844: theme and help in the bar, hit-testable; help named "Help"',
+      (await hit(lp.page, '.mco-bar-tools #btn-theme')) && (await hit(lp.page, '.mco-bar-tools #btn-info'))
+        && (await lp.page.evaluate(() => document.getElementById('btn-info').getAttribute('aria-label'))) === 'Help');
     await lp.page.click('.mco-legend-btn');
     await lp.page.waitForFunction(() => document.getElementById('nav-drawer').classList.contains('is-open'), null, { timeout: 5000 }).catch(() => {});
     const l2 = await lp.page.evaluate(() => ({ focus: document.activeElement && document.activeElement.id,
