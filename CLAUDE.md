@@ -35,12 +35,14 @@ with CORS `*`. If the host changes, change `MESONET_ORIGIN` and the CSP.
 
 Grid geometry (`data/mt_grids_simple.geojson`, 205 ACE cells keyed by `Cell`)
 and the Montana outline are vendored; `data/README.md` has the regeneration
-recipe. County / watershed / tribal overlays stream as FlatGeobuf from
+recipe. The grid's source of truth is `data/umrb-ace-grid.geojson` in the
+umrb-ace repo (Montana cells only) — not `mt_grids.fgb` on data.climate.umt.edu,
+which is stale. County / watershed / tribal overlays stream as FlatGeobuf from
 `data.climate.umt.edu` on demand.
 
-Known registry defect (fix in AirTable, not here): `acesfork` is tagged `E-9`,
-but the E row stops at E-6 and the point falls outside the grid, so it renders
-as an orphan station with an explicit "no drawn cell" note.
+A station whose `ace_grid` names no drawn cell renders as an orphan with an
+explicit "no drawn cell" note. No registry station does this today (`acesfork`,
+in `E-9`, used to, before the grid moved to umrb-ace); the harness fakes one.
 
 ## Deploying — read before you push
 

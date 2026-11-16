@@ -22,8 +22,8 @@ A nightly workflow (`.github/workflows/preview.yml`) commits `assets/og-card.png
 | Parameter | Values | What it does |
 |---|---|---|
 | `internal` | `1` | Internal view, with build progress split in two (also `view=internal`) |
-| `cat-public` | `active`, `building`, `contracted`, `candidate-26`, `candidate-27`, `unassigned` | Statuses shown in the public view |
-| `cat-internal` | `active`, `structures`, `ground`, `contracted`, `candidate-26`, `candidate-27`, `unassigned` | Statuses shown in the internal view |
+| `cat-public` | `active`, `building`, `contracted`, `candidate-27`, `unassigned` | Statuses shown in the public view |
+| `cat-internal` | `active`, `structures`, `ground`, `contracted`, `candidate-27`, `unassigned` | Statuses shown in the internal view |
 | `overlays` | `tribal`, `counties`, `hucs` | Reference layers turned on |
 | `stations` | `off` | Hide station dots |
 | `labels` | `on`, `off` | Grid cell labels |

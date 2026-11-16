@@ -121,6 +121,27 @@ export default {
     const k = await open('?kbd=off');
     check('?kbd=off sticks in the URL', await k.page.evaluate(() => /kbd=off/.test(location.search)));
     await k.close();
+    // A failed load must not leave the stamp on "Updated …" or "Loading…".
+    const stamp = (p) => p.evaluate(() => document.getElementById('refresh-stamp').textContent);
+    const f = await open('', { ready: () => document.querySelectorAll('#sr-cell-rows tr').length >= 200 });
+    await f.ctx.route('**/stations/status/live**', (r) => r.fulfill({ status: 500, body: '' }));
+    await f.page.click('#btn-refresh');
+    await f.page.waitForFunction(() => document.querySelector('.mco-notice'), null, { timeout: 10000 }).catch(() => {});
+    check('status feed fails on Refresh: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
+    await f.ctx.route('**/data/mt_grids_simple.geojson', (r) => r.fulfill({ status: 500, body: '' }));
+    await f.page.reload();
+    await f.page.waitForFunction(() => /failed to load/.test(document.querySelector('.mco-notice')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
+    const noticeText = () => f.page.evaluate(() => document.querySelector('.mco-notice-text')?.textContent || '');
+    check('grid fetch fails: the notice carries no error text', (await noticeText()) === 'Error The map data failed to load.', await noticeText());
+    await f.page.click('#btn-refresh');
+    await f.page.waitForTimeout(2000);
+    check('grid fetch fails, then Refresh: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
+    // A map that cannot start must not leave the stamp on "Loading…".
+    await f.ctx.route('**/maplibre-gl@*/dist/maplibre-gl*.mjs', (r) => r.abort());
+    await f.page.reload();
+    await f.page.waitForFunction(() => /library failed to load/.test(document.querySelector('.mco-notice')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
+    check('map library fails to load: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
+    await f.close();
     // No horizontal overflow at 320px (touch): the page must not scroll
     // sideways (WebKit) or widen its layout viewport past the device width
     // (Chromium mobile grows innerWidth instead of scrolling), so both are
