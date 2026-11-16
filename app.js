@@ -654,7 +654,7 @@
     } catch (err) {
       console.error(err);
       dataUnavailable = true;
-      showDataNotice('danger', 'Error', `The map data failed to load (${err.message}).`);
+      showDataNotice('danger', 'Error', 'The map data failed to load.');
       refreshStampEl.textContent = 'Data unavailable';
       // Still render whatever we have — an unshaded grid is better than nothing.
       indexData();
@@ -1663,6 +1663,7 @@
       // gets the plainer notice in bootMap() rather than this message.
       console.error(err);
       MCO.ready();
+      refreshStampEl.textContent = 'Data unavailable';
       MCO.notice({
         tone: 'danger', text: 'The map could not start. It needs a browser with WebGL2.',
         container: document.getElementById('map-container'), place: 'over',
@@ -1766,6 +1767,7 @@
   function onMapLibreFail(err) {
     console.error(err);
     MCO.ready();
+    refreshStampEl.textContent = 'Data unavailable';
     const n = MCO.notice({
       tone: 'danger', text: 'The map library failed to load.',
       container: document.getElementById('map-container'), place: 'over',
@@ -1776,6 +1778,7 @@
     MCO.map.loadMapLibre().then(initMap, onMapLibreFail).catch((err) => {
       console.error(err);
       MCO.ready();
+      refreshStampEl.textContent = 'Data unavailable';
       MCO.notice({
         tone: 'danger', text: 'The map could not start.',
         container: document.getElementById('map-container'), place: 'over',

@@ -131,9 +131,16 @@ export default {
     await f.ctx.route('**/data/mt_grids_simple.geojson', (r) => r.fulfill({ status: 500, body: '' }));
     await f.page.reload();
     await f.page.waitForFunction(() => /failed to load/.test(document.querySelector('.mco-notice')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
+    const noticeText = () => f.page.evaluate(() => document.querySelector('.mco-notice-text')?.textContent || '');
+    check('grid fetch fails: the notice carries no error text', (await noticeText()) === 'Error The map data failed to load.', await noticeText());
     await f.page.click('#btn-refresh');
     await f.page.waitForTimeout(2000);
     check('grid fetch fails, then Refresh: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
+    // A map that cannot start must not leave the stamp on "Loading…".
+    await f.ctx.route('**/maplibre-gl@*/dist/maplibre-gl*.mjs', (r) => r.abort());
+    await f.page.reload();
+    await f.page.waitForFunction(() => /library failed to load/.test(document.querySelector('.mco-notice')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
+    check('map library fails to load: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
     await f.close();
     // No horizontal overflow at 320px (touch): the page must not scroll
     // sideways (WebKit) or widen its layout viewport past the device width
