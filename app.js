@@ -655,7 +655,7 @@
       console.error(err);
       dataUnavailable = true;
       showDataNotice('danger', 'Error', `The map data failed to load (${err.message}).`);
-      refreshStampEl.textContent = 'Not updated';
+      refreshStampEl.textContent = 'Data unavailable';
       // Still render whatever we have — an unshaded grid is better than nothing.
       indexData();
       populateSearch();
@@ -683,7 +683,7 @@
     applyAllFilters();
     renderLegend();
     // No status rows means nothing was updated, so the stamp must not say so.
-    if (dataUnavailable) refreshStampEl.textContent = 'Not updated';
+    if (dataUnavailable) refreshStampEl.textContent = 'Data unavailable';
     else refreshStamp();
     MCO.ready();   // first meaningful state: the grid is shaded (idempotent)
 
@@ -1660,7 +1660,7 @@
     } catch (err) {
       // MapLibre 6 needs WebGL2: its constructor throws
       // GPUInitializationError without it. Any later error is a bug, and
-      // reaches the console rather than this message.
+      // gets the plainer notice in bootMap() rather than this message.
       console.error(err);
       MCO.ready();
       MCO.notice({
@@ -1773,7 +1773,14 @@
     });
   }
   function bootMap() {
-    MCO.map.loadMapLibre().then(initMap, onMapLibreFail);
+    MCO.map.loadMapLibre().then(initMap, onMapLibreFail).catch((err) => {
+      console.error(err);
+      MCO.ready();
+      MCO.notice({
+        tone: 'danger', text: 'The map could not start.',
+        container: document.getElementById('map-container'), place: 'over',
+      });
+    });
   }
 
   // ── Boot ─────────────────────────────────────────────────────────────────

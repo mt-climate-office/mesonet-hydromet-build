@@ -127,13 +127,13 @@ export default {
     await f.ctx.route('**/stations/status/live**', (r) => r.fulfill({ status: 500, body: '' }));
     await f.page.click('#btn-refresh');
     await f.page.waitForFunction(() => document.querySelector('.mco-notice'), null, { timeout: 10000 }).catch(() => {});
-    check('status feed fails on Refresh: stamp says "Not updated"', (await stamp(f.page)) === 'Not updated', await stamp(f.page));
+    check('status feed fails on Refresh: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
     await f.ctx.route('**/data/mt_grids_simple.geojson', (r) => r.fulfill({ status: 500, body: '' }));
     await f.page.reload();
     await f.page.waitForFunction(() => /failed to load/.test(document.querySelector('.mco-notice')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
     await f.page.click('#btn-refresh');
     await f.page.waitForTimeout(2000);
-    check('grid fetch fails, then Refresh: stamp says "Not updated"', (await stamp(f.page)) === 'Not updated', await stamp(f.page));
+    check('grid fetch fails, then Refresh: stamp says "Data unavailable"', (await stamp(f.page)) === 'Data unavailable', await stamp(f.page));
     await f.close();
     // No horizontal overflow at 320px (touch): the page must not scroll
     // sideways (WebKit) or widen its layout viewport past the device width
