@@ -65,6 +65,6 @@ node tools/verify/keyboard.mjs   --config ../mesonet-umrb-build/verify.config.mj
 
 ## Kit
 
-`mco-web-style` v1.1.0, pinned with SRI in `index.html`.
+`mco-web-style` v1.1.1, pinned with SRI in `index.html`.
 
 Design rules: mco-web-style/HOUSE-STYLE.md
