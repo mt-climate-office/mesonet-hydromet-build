@@ -43,6 +43,7 @@ Lists take spaces, `+` or commas. A parameter at its default is left out of the 
 - Cutover: change `MESONET_ORIGIN` in `app.js` and the CSP `connect-src` in `index.html`.
 - Overlays: FlatGeobuf files under `https://data.climate.umt.edu/mesonet/fgb/`, loaded when turned on.
 - Grid cells and the Montana outline: vendored in `data/`. `data/README.md` has the regeneration recipe.
+- NDAWN stations: four cells in the northeast (S-2, R-2, S-3, S-4) hold NDSU's NDAWN stations. They are listed in `NDAWN_STATIONS` in `app.js` and link to `ndawn.ndsu.nodak.edu`.
 
 ## Tests
 
