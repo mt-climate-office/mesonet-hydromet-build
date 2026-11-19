@@ -36,7 +36,8 @@ with CORS `*`. If the host changes, change `MESONET_ORIGIN` and the CSP.
 
 Grid geometry (`data/mt_grids_simple.geojson`, 205 ACE cells keyed by `Cell`;
 the internal view swaps in `data/mt_grids_full_simple.geojson`, 294 statewide
-cells with `W-A`…`W-F` columns west of A, row `0` above row 1)
+cells with `W-A`…`W-F` columns west of A, row `0` above row 1; a lower-case
+`Cell` there marks a cell dropped from consideration, drawn gray)
 and the Montana outline are vendored; `data/README.md` has the regeneration
 recipe. The grid's source of truth is `data/umrb-ace-grid.geojson` in the
 umrb-ace repo (Montana cells only) — not `mt_grids.fgb` on data.climate.umt.edu,
