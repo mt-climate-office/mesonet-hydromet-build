@@ -135,6 +135,14 @@ export default {
     const intIds = await cellIds(int.page);
     check('internal view: 294 statewide cells, incl. W-A-1, W-E-0 and J-13',
       intIds.length === 294 && ['W-A-1', 'W-E-0', 'J-13', 'A-3'].every((c) => intIds.includes(c)), intIds.length);
+    // Lower-case IDs in the statewide file are dropped cells; the table
+    // shows them upper-case, labelled "Dropped from consideration".
+    const dropped = await int.page.evaluate(() => [...document.querySelectorAll('#sr-cell-rows tr')]
+      .filter((tr) => tr.children[1].textContent === 'Dropped from consideration')
+      .map((tr) => tr.children[0].textContent));
+    check('internal view: 22 dropped cells, incl. A-3 and W-F-2, none in the UMRB build',
+      dropped.length === 22 && ['A-3', 'W-F-2'].every((c) => dropped.includes(c))
+        && !dropped.some((c) => pubIds.includes(c)), dropped.length);
     check('internal view: help and table caption name all of Montana', await int.page.evaluate(() =>
       !document.getElementById('internal-help').hidden
         && /^Montana grid cells/.test(document.querySelector('#sr-cell-table caption').textContent)));
