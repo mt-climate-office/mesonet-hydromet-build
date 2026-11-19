@@ -1,8 +1,8 @@
 // verify.config.mjs — config for the mco-web-style verify harness
 // (tools/verify/ in the kit checkout; nothing here is a runtime dependency).
 // Run from the kit checkout, beside this repo:
-//   node tools/verify/axe-matrix.mjs --config ../mesonet-umrb-build/verify.config.mjs
-//   node tools/verify/keyboard.mjs   --config ../mesonet-umrb-build/verify.config.mjs
+//   node tools/verify/axe-matrix.mjs --config ../mesonet-hydromet-build/verify.config.mjs
+//   node tools/verify/keyboard.mjs   --config ../mesonet-hydromet-build/verify.config.mjs
 // `root` resolves from the current directory, so it assumes that layout;
 // pass --root to override. The feed is LIVE (the API at app.js MESONET_ORIGIN,
 // cross-origin AirTable read) — the harness records no fixtures.
@@ -19,12 +19,12 @@ const dataDrew = () => {
 };
 
 export default {
-  root: '../mesonet-umrb-build',
+  root: '../mesonet-hydromet-build',
   page: 'index.html',
   // The intro modal opens on a first visit; seed its seen-key so it does not
   // sit over every scenario. (Its own behavior is exercised by keyboard.mjs
   // through the info button.)
-  storage: { 'mco-umrb-seen-intro': '1' },
+  storage: { 'mco-build-seen-intro': '1' },
   scenarios: [
     { name: 'default', query: '', ready: dataDrew },
     // Station deep link: the detail panel at every width — end-docked at

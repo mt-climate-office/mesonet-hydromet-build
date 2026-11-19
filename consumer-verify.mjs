@@ -30,7 +30,7 @@ const CONFIG = {
   // This page's own intro key since kit 0.21.0 (app.js KEY.intro; it used
   // status's 'mco-status-seen-intro' before). Seeding the old key left the
   // intro open over every check below.
-  initLocalStorage: { 'mco-umrb-seen-intro': '1' },
+  initLocalStorage: { 'mco-build-seen-intro': '1' },
   // The live status feed is cross-origin on the mesonet-db-rds API; open()
   // below answers it from fixtures/status.json so the run is deterministic.
   // Without the fixture the fetch fails, #data-banner appears, and the map
@@ -195,7 +195,7 @@ for (const theme of CONFIG.themes) {
   check('first visit auto-opens the intro',
     await page.evaluate(() => document.getElementById('info-modal').open));
   check('intro marked seen at open (not on close)',
-    (await page.evaluate(() => localStorage.getItem('mco-umrb-seen-intro'))) === '1');
+    (await page.evaluate(() => localStorage.getItem('mco-build-seen-intro'))) === '1');
   // ...under this page's key only: status's flag is its own (app.js KEY).
   check('intro does not write status\'s seen-key',
     (await page.evaluate(() => localStorage.getItem('mco-status-seen-intro'))) === null);
@@ -231,9 +231,9 @@ for (const theme of CONFIG.themes) {
 {
   const ctx = await newContext({ viewport: { width: 1440, height: 900 } });
   await ctx.addInitScript(() => {
-    localStorage.setItem('mco-umrb-seen-intro', '1');
+    localStorage.setItem('mco-build-seen-intro', '1');
     // Pre-kit spelling under status's prefix, which the page copies once to
-    // mco-umrb-legend (app.js migrateKey).
+    // mco-build-legend (app.js migrateKey).
     localStorage.setItem('mco-status-legend', 'collapsed');
   });
   const page = await ctx.newPage();
@@ -252,7 +252,7 @@ for (const theme of CONFIG.themes) {
 {
   const ctx = await newContext({ viewport: { width: 1440, height: 900 } });
   await ctx.addInitScript(() => {
-    localStorage.setItem('mco-umrb-seen-intro', '1');
+    localStorage.setItem('mco-build-seen-intro', '1');
     localStorage.setItem('mco-theme', 'light');
   });
   const page = await ctx.newPage();
@@ -373,7 +373,7 @@ const detailText = () => {
    connect-src, not just img-src, because MapLibre fetches raster-dem tiles. */
 {
   const ctx = await newContext({ viewport: { width: 1440, height: 900 } });
-  await ctx.addInitScript(() => localStorage.setItem('mco-umrb-seen-intro', '1'));
+  await ctx.addInitScript(() => localStorage.setItem('mco-build-seen-intro', '1'));
   const page = await ctx.newPage();
   const hosts = new Set();
   const blocked = [];

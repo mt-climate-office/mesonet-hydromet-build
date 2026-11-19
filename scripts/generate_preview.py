@@ -20,8 +20,8 @@ from playwright.sync_api import sync_playwright
 
 OUT = Path(__file__).parent.parent / "assets" / "og-card.png"
 # The Pages origin, loaded directly, so regenerating the card does not depend
-# on the UMT reverse proxy that serves the canonical mesonet.climate.umt.edu/umrb/.
-URL = "https://mt-climate-office.github.io/mesonet-umrb-build/"
+# on the UMT reverse proxy that serves the canonical mesonet.climate.umt.edu/build/.
+URL = "https://mt-climate-office.github.io/mesonet-hydromet-build/"
 QUERY = "theme=light"
 # CSS viewport and pixel density. og:image:width/height in index.html declare
 # the resulting PNG size (WIDTH*SCALE x HEIGHT*SCALE) — keep them in step.
@@ -38,12 +38,12 @@ def main() -> None:
         )
         # Suppress the first-visit intro modal, which would otherwise cover the
         # map. The key is the one app.js hands MCO.initInfoModal's intro option
-        # (mco-umrb-seen-intro since kit 0.21.0; it was mco-status-seen-intro,
-        # status's key, which is also set so a run against a page that has not
-        # deployed yet still stays shut).
+        # (mco-build-seen-intro since the move to /build/; it was
+        # mco-umrb-seen-intro, which is also set so a run against a page that
+        # has not deployed yet still stays shut).
         ctx.add_init_script(
-            "localStorage.setItem('mco-umrb-seen-intro', '1');"
-            "localStorage.setItem('mco-status-seen-intro', '1')"
+            "localStorage.setItem('mco-build-seen-intro', '1');"
+            "localStorage.setItem('mco-umrb-seen-intro', '1')"
         )
         page = ctx.new_page()
 

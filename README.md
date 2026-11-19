@@ -1,8 +1,8 @@
-# UMRB Build Status
+# HydroMet Build Status
 
-A map of Montana Mesonet buildout across the Upper Missouri River Basin, one grid cell per station.
+A map of the Montana Mesonet HydroMet buildout, one grid cell per station. The public view covers the Upper Missouri River Basin; the internal view covers all of Montana.
 
-https://mesonet.climate.umt.edu/umrb/
+https://mesonet.climate.umt.edu/build/ (formerly `/umrb/`, which redirects here)
 
 ## Run it
 
@@ -14,7 +14,7 @@ python -m http.server 8000
 
 ## Deploy
 
-GitHub Pages publishes `main` (repo root). `mesonet.climate.umt.edu/umrb/` proxies it, so pushing `main` deploys to production.
+GitHub Pages publishes `main` (repo root). `mesonet.climate.umt.edu/build/` proxies it, so pushing `main` deploys to production.
 A nightly workflow (`.github/workflows/preview.yml`) commits `assets/og-card.png` to `main`. Pull before you push.
 
 ## URL parameters
@@ -59,8 +59,8 @@ mkdir -p fixtures && curl -fsS -o fixtures/status.json \
 node consumer-verify.mjs
 
 # Kit harness, from an mco-web-style checkout beside this repo
-node tools/verify/axe-matrix.mjs --config ../mesonet-umrb-build/verify.config.mjs
-node tools/verify/keyboard.mjs   --config ../mesonet-umrb-build/verify.config.mjs
+node tools/verify/axe-matrix.mjs --config ../mesonet-hydromet-build/verify.config.mjs
+node tools/verify/keyboard.mjs   --config ../mesonet-hydromet-build/verify.config.mjs
 ```
 
 ## Kit

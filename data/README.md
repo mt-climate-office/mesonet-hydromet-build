@@ -1,4 +1,4 @@
-# Vendored geometry for the UMRB status map
+# Vendored geometry for the HydroMet build map
 
 These files ship with the page so the grid draws immediately and the map does
 not go blank when the CDN is slow. The optional county / watershed / tribal-land
