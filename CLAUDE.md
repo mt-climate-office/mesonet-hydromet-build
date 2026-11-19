@@ -1,6 +1,7 @@
-# mesonet-umrb-build
+# mesonet-hydromet-build
 
-The Montana Mesonet UMRB Build Status map: a static MapLibre single-page app at
+The Montana Mesonet HydroMet Build Status map (formerly mesonet-umrb-build, at
+`/umrb/`): a static MapLibre single-page app at
 the repo root (GitHub Pages root). No build step, no runtime dependencies beyond
 the API, the MCO data CDN, and the CDN-pinned libraries in `index.html`.
 
@@ -18,8 +19,8 @@ App-local by deliberate kit decision (do NOT extract): the cell-status ramp
 (`VIEWS` in `app.js`, with separate light/dark hexes per status — the one place
 raw hexes are allowed, as data-vis colors), the cell/station search combobox,
 and the legend rendering. Every localStorage key is
-`mco-umrb-*` (the page shares an origin with mesonet-status; `app.js` §
-Storage keys migrates the old `mco-status-*` ones).
+`mco-build-*` (the page shares an origin with mesonet-status; `app.js` §
+Storage keys migrates the older `mco-umrb-*` and `mco-status-*` ones).
 
 ## Data
 
@@ -29,7 +30,7 @@ the help's API docs link derive from it too): `/stations/status/live?type=json`,
 a live read of the AirTable "Station Status" view served by the mesonet-db-rds
 API (`api/app/app/registry.py` there; 120 s cache, falls back to the synced
 stations table). The page is cross-origin to the API everywhere — GitHub Pages
-origin and the `mesonet.climate.umt.edu/umrb/` proxy alike — so `API_BASE` must
+origin and the `mesonet.climate.umt.edu/build/` proxy alike — so `API_BASE` must
 also be listed in the meta CSP `connect-src`, and the API must keep answering
 with CORS `*`. If the host changes, change `MESONET_ORIGIN` and the CSP.
 
@@ -50,8 +51,9 @@ in `E-9`, used to, before the grid moved to umrb-ace); the harness fakes one.
 
 Pushing `main` **is a production deploy, on two URLs**: GitHub Pages publishes
 the repo root from `main`, and the same page is reverse-proxied at
-`mesonet.climate.umt.edu/umrb/` (mesonet_app Caddyfile on the legacy host;
+`mesonet.climate.umt.edu/build/` (mesonet_app Caddyfile on the legacy host;
 `pages_apps` in mesonet-gateway terraform on the CloudFront host). The old
+`/umrb/` path 301s to `/build/` on both hosts, the old
 `/api/v2/map/status/` path 301s here from the mesonet-db-rds API, and the
 mco-website UMRB page iframes this URL.
 
@@ -60,7 +62,7 @@ back to `main`** — always pull/rebase before pushing, or you race it. Each of
 those commits is itself a Pages redeploy.
 
 `scripts/generate_preview.py` screenshots the live Pages origin (1200×630 layout at 2×, so 2400×1260) with
-`?theme=light`, pre-setting `mco-umrb-seen-intro` so the intro modal stays
+`?theme=light`, pre-setting `mco-build-seen-intro` so the intro modal stays
 shut, and waits on the same `#sr-cell-rows` readiness signal as the harness.
 That param, that localStorage key, and that table id are a contract — renaming
 any of them silently breaks the social card in production.

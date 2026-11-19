@@ -1,5 +1,5 @@
 /* ==========================================================================
-   UMRB Build Status — application code.
+   HydroMet Build Status — application code.
 
    Classic script, NOT a module: the kit ships mco-core.js / mco-map.js as
    plain globals (MCO, MCO.map), and a classic script keeps this file in the
@@ -21,7 +21,7 @@
   // 'https://mesonet.climate.umt.edu'. Change it here, and in the CSP and README.
   const MESONET_ORIGIN = 'https://mesonet2.climate.umt.edu';
   // Absolute: this page is a static GitHub Pages site (proxied at
-  // mesonet.climate.umt.edu/umrb/), so the API is always cross-origin. The
+  // mesonet.climate.umt.edu/build/), so the API is always cross-origin. The
   // status feed is a live AirTable read that only the mesonet-db-rds API
   // serves; it answers with CORS `*`. The host must also appear in the meta
   // CSP connect-src in index.html.
@@ -240,25 +240,25 @@
 
   // ── Storage keys ─────────────────────────────────────────────────────────
   // This page shares an origin with mesonet-status (mesonet.climate.umt.edu,
-  // /umrb/ beside /status/), and until kit 0.21.0 it stored its settings
-  // under status's prefix. 'mco-status-seen-intro', '-labels' and '-legend'
-  // are keys status itself uses, so the two apps were reading each other's
-  // choices: seeing one intro suppressed the other. Every key is now
-  // 'mco-umrb-*' (kit rule: mco-<app>-*).
-  //   - Keys only this page wrote ('-stations', '-overlays') migrate: the
-  //     old value is read once, written under the new key, and removed.
-  //   - Keys status also owns ('-labels', '-legend') are copied once and
-  //     left in place: removing them would erase status's own setting.
-  //   - The intro flag is NOT carried over: the old one cannot tell which of
-  //     the two intros a visitor saw, so this page's intro shows once more
-  //     under its own key. Status's flag is left alone.
+  // /build/ beside /status/). Every key is 'mco-build-*' (kit rule:
+  // mco-<app>-*). Two generations of older keys are carried forward once:
+  //   - 'mco-umrb-*', from when the page lived at /umrb/. It was the only
+  //     writer of those, so every one moves (the intro flag included) and the
+  //     old key is removed.
+  //   - 'mco-status-*', from before kit 0.21.0, when the page stored its
+  //     settings under status's prefix, so the two apps read each other's
+  //     choices. Keys only this page wrote ('-stations', '-overlays') move;
+  //     keys status also owns ('-labels', '-legend') are copied and left in
+  //     place. That intro flag is NOT carried over: it cannot tell which of
+  //     the two intros a visitor saw. This step runs only for a browser that
+  //     never ran it under the 'mco-umrb-*' keys.
   const KEY = {
-    intro:    'mco-umrb-seen-intro',
-    stations: 'mco-umrb-stations',
-    overlays: 'mco-umrb-overlays',
-    labels:   'mco-umrb-labels',
-    legend:   'mco-umrb-legend',
-    migrated: 'mco-umrb-keys-migrated',
+    intro:    'mco-build-seen-intro',
+    stations: 'mco-build-stations',
+    overlays: 'mco-build-overlays',
+    labels:   'mco-build-labels',
+    legend:   'mco-build-legend',
+    migrated: 'mco-build-keys-migrated',
   };
   function migrateKey(oldKey, newKey, removeOld) {
     try {
@@ -269,11 +269,20 @@
     } catch (e) { /* storage unavailable: nothing to migrate */ }
   }
   // Once per browser, so a status setting made later is never copied over.
+  // The 'mco-umrb-*' keys go first: migrateKey never overwrites a key that
+  // is already set, so they win over the older status ones.
   if (MCO.lsGet(KEY.migrated) == null) {
-    migrateKey('mco-status-stations', KEY.stations, true);
-    migrateKey('mco-status-overlays', KEY.overlays, true);
-    migrateKey('mco-status-labels',   KEY.labels,   false);
-    migrateKey('mco-status-legend',   KEY.legend,   false);
+    const statusDone = MCO.lsGet('mco-umrb-keys-migrated') != null;
+    for (const k of ['seen-intro', 'stations', 'overlays', 'labels', 'legend']) {
+      migrateKey(`mco-umrb-${k}`, `mco-build-${k}`, true);
+    }
+    try { localStorage.removeItem('mco-umrb-keys-migrated'); } catch (e) { /* storage unavailable */ }
+    if (!statusDone) {
+      migrateKey('mco-status-stations', KEY.stations, true);
+      migrateKey('mco-status-overlays', KEY.overlays, true);
+      migrateKey('mco-status-labels',   KEY.labels,   false);
+      migrateKey('mco-status-legend',   KEY.legend,   false);
+    }
     MCO.lsSet(KEY.migrated, '1');
   }
 
@@ -362,7 +371,7 @@
     // The statewide grid is no longer just the UMRB: say so wherever the
     // page names what the map shows to assistive tech, and in the help.
     document.getElementById('map').setAttribute('aria-label',
-      'Montana Mesonet station build status map, all of Montana');
+      'HydroMet station build status map, all of Montana');
     document.querySelector('#sr-cell-table caption').textContent =
       'Montana grid cells and their Mesonet buildout status';
     document.getElementById('internal-help').hidden = false;

@@ -29,12 +29,12 @@
   <!-- viewport-fit=cover so env(safe-area-inset-*) resolves on notched phones;
        without it the kit's safe-area paddings silently compute to 0. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>UMRB Build · MT Mesonet</title>
-  <meta name="description" content="Buildout-status map for the Montana Mesonet in the Upper Missouri River Basin — which ACE grid cells hold an operational station, which are scheduled, and which are still available.">
+  <title>HydroMet Build · MT Mesonet</title>
+  <meta name="description" content="Buildout-status map for the Montana Mesonet HydroMet network — which ACE grid cells hold an operational station, which are scheduled, and which are still available.">
   <meta name="author" content="Montana Climate Office">
   <meta name="theme-color" content="#1a6faf" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#161b22" media="(prefers-color-scheme: dark)">
-  <link rel="canonical" href="https://mesonet.climate.umt.edu/umrb/">
+  <link rel="canonical" href="https://mesonet.climate.umt.edu/build/">
 
   <!-- Favicons / app icons: hot-linked from the pinned kit tag (kit 0.9.0+,
        decided 2026-10-08) so they version with the kit and cannot drift. The
@@ -50,12 +50,12 @@
        nightly by .github/workflows/preview.yml (scripts/generate_preview.py). -->
   <meta property="og:type"             content="website">
   <meta property="og:site_name"        content="Montana Mesonet">
-  <meta property="og:title"            content="UMRB Build · Montana Mesonet">
-  <meta property="og:description"      content="Buildout-status map for the Montana Mesonet in the Upper Missouri River Basin — which ACE grid cells hold an operational station, which are scheduled, and which are still available.">
-  <meta property="og:url"              content="https://mesonet.climate.umt.edu/umrb/">
+  <meta property="og:title"            content="HydroMet Build · Montana Mesonet">
+  <meta property="og:description"      content="Buildout-status map for the Montana Mesonet HydroMet network — which ACE grid cells hold an operational station, which are scheduled, and which are still available.">
+  <meta property="og:url"              content="https://mesonet.climate.umt.edu/build/">
   <meta property="og:locale"           content="en_US">
-  <meta property="og:image"            content="https://mesonet.climate.umt.edu/umrb/assets/og-card.png">
-  <meta property="og:image:secure_url" content="https://mesonet.climate.umt.edu/umrb/assets/og-card.png">
+  <meta property="og:image"            content="https://mesonet.climate.umt.edu/build/assets/og-card.png">
+  <meta property="og:image:secure_url" content="https://mesonet.climate.umt.edu/build/assets/og-card.png">
   <meta property="og:image:type"       content="image/png">
   <meta property="og:image:width"      content="2400">
   <meta property="og:image:height"     content="1260">
@@ -63,9 +63,9 @@
 
   <!-- Twitter / X -->
   <meta name="twitter:card"        content="summary_large_image">
-  <meta name="twitter:title"       content="UMRB Build · Montana Mesonet">
-  <meta name="twitter:description" content="Buildout-status map for the Montana Mesonet in the Upper Missouri River Basin — which ACE grid cells hold an operational station, which are scheduled, and which are still available.">
-  <meta name="twitter:image"       content="https://mesonet.climate.umt.edu/umrb/assets/og-card.png">
+  <meta name="twitter:title"       content="HydroMet Build · Montana Mesonet">
+  <meta name="twitter:description" content="Buildout-status map for the Montana Mesonet HydroMet network — which ACE grid cells hold an operational station, which are scheduled, and which are still available.">
+  <meta name="twitter:image"       content="https://mesonet.climate.umt.edu/build/assets/og-card.png">
   <meta name="twitter:image:alt"   content="Map of eastern Montana showing Upper Missouri River Basin grid cells shaded by Mesonet station buildout status.">
 
   <!-- mco-web-style · anti-flash theme boot — copied byte for byte from the
@@ -350,7 +350,7 @@
 
   <div class="mco-nav-drawer" id="nav-drawer">
   <div class="brand">
-    <h1 class="brand-title">UMRB Build Status</h1>
+    <h1 class="brand-title">HydroMet Build Status</h1>
     <span class="brand-subtitle">A service of the Montana Climate Office</span>
     <span class="brand-flag" id="brand-flag" hidden>Internal view</span>
   </div>
@@ -430,7 +430,7 @@
 
 <main id="main" tabindex="-1">
 <div id="map-container">
-  <div id="map" role="application" aria-label="UMRB Mesonet station build status map"></div>
+  <div id="map" role="application" aria-label="HydroMet station build status map, Upper Missouri River Basin"></div>
   <!-- A failed or empty station-status load shows an MCO.notice here (app.js).
        This callout shows when the legend filters hide every cell. -->
   <div id="empty-state" class="mco-empty" data-place="over" hidden role="status" aria-live="polite"></div>
@@ -499,7 +499,7 @@
   <div class="info-modal-box">
     <div class="info-modal-header">
       <div>
-        <h2 class="info-modal-title" id="info-modal-title">UMRB Build Status</h2>
+        <h2 class="info-modal-title" id="info-modal-title">HydroMet Build Status</h2>
       </div>
       <button type="button" class="modal-close" aria-label="Close" data-close-modal>×</button>
     </div>
