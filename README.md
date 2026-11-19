@@ -23,7 +23,7 @@ A nightly workflow (`.github/workflows/preview.yml`) commits `assets/og-card.png
 |---|---|---|
 | `internal` | `1` | Internal view: build progress split in two, and the grid extended to all of Montana (also `view=internal`) |
 | `cat-public` | `active`, `building`, `contracted`, `candidate-27`, `unassigned` | Statuses shown in the public view |
-| `cat-internal` | `active`, `structures`, `ground`, `contracted`, `candidate-27`, `unassigned`, `dropped` | Statuses shown in the internal view |
+| `cat-internal` | `active`, `structures`, `ground`, `contracted`, `candidate-27`, `unassigned`, `removed` | Statuses shown in the internal view |
 | `overlays` | `tribal`, `counties`, `hucs` | Reference layers turned on |
 | `stations` | `off` | Hide station dots |
 | `labels` | `on`, `off` | Grid cell labels |
