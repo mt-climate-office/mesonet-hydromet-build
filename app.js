@@ -174,11 +174,11 @@
         { key: 'contracted',   light: '#97c09b', dark: '#c0ebc4', label: 'Installation pending' },
         { key: 'candidate-27', light: '#a69338', dark: '#ceb95a', label: 'Install 2027' },
         { key: 'unassigned',   light: '#690500', dark: '#95290d', label: 'Available cell' },
-        // Off the ramp on purpose: a dropped cell is not a stage of the build
+        // Off the ramp on purpose: a removed cell is not a stage of the build
         // but out of it, so it gets a neutral gray instead of a ramp hue.
         // Chosen to sit in each theme's lightness band (see above) so the
         // outline and label stay as legible as on any other cell.
-        { key: 'dropped',      light: '#7a7a7a', dark: '#8c8c8c', label: 'Dropped from consideration' },
+        { key: 'removed',      light: '#7a7a7a', dark: '#8c8c8c', label: 'Removed from consideration' },
       ],
     },
   };
@@ -407,7 +407,7 @@
   // a shared machine should never stay in it. It also swaps the UMRB grid for
   // the statewide one (GRIDS_URL_BY_VIEW). A non-UMRB cell with no station
   // falls through to 'unassigned' like any empty cell, unless the grid file
-  // spells its ID in lower case, which marks it dropped (see indexData).
+  // spells its ID in lower case, which marks it removed (see indexData).
   const activeView = (() => {
     if (getLower('view') === 'internal') return 'internal';
     const raw = getLower('internal');
@@ -850,17 +850,19 @@
       const raw = String(f.properties.Cell);
       const cell = normalizeCell(raw);
       const s = stationByCell.get(cell) || null;
-      // A lower-case ID in the grid file marks a cell dropped from
-      // consideration (umrb-ace's convention; data/README.md). It only counts
-      // in a view that has the category, and only while no station claims
-      // the cell: a station on the ground outranks the plan.
-      const dropped = !s && raw !== raw.toUpperCase() && !!catByKey('dropped');
+      // A lower-case ID in the grid file marks a cell removed from
+      // consideration (umrb-ace's convention; data/README.md), and its
+      // `Reason` property says why. It only counts in a view that has the
+      // category, and only while no station claims the cell: a station on
+      // the ground outranks the plan.
+      const removed = !s && raw !== raw.toUpperCase() && !!catByKey('removed');
       cellById.set(cell, {
         cell,
         stationId: s ? s.station : null,
         // An NDAWN station is a row with status 'active', so its cell reads
         // as operational: a station on the ground, just not one of ours.
-        cat: dropped ? 'dropped' : categoryFor(s && s.status, activeView),
+        cat: removed ? 'removed' : categoryFor(s && s.status, activeView),
+        reason: removed ? String(f.properties.Reason || '').trim() : '',
         ndawn: !!(s && s.ndawn),
         center: featureCenter(f),
       });
@@ -927,8 +929,9 @@
         const info = cellById.get(cell);
         const station = info && info.stationId ? stationById.get(info.stationId) : null;
         const name = station ? displayName(station) : '—';
+        const status = catLabel(f.properties.cat) + (info && info.reason ? ` (${info.reason})` : '');
         return `<tr><td>${MCO.escapeHTML(cell)}</td>`
-             + `<td>${MCO.escapeHTML(catLabel(f.properties.cat))}</td>`
+             + `<td>${MCO.escapeHTML(status)}</td>`
              + `<td>${MCO.escapeHTML(name)}</td></tr>`;
       });
     tbody.innerHTML = rows.join('');
@@ -1294,10 +1297,11 @@
     const title = `Grid cell ${cellId}`;
 
     if (!s) {
-      const why = c.cat === 'dropped'
-        ? 'No station is planned for this cell.'
-        : 'No station assigned to this cell yet.';
-      return buildPopup({ title }, c.cat, [note('pop-empty', why)]);
+      if (c.cat === 'removed') {
+        return buildPopup({ title }, c.cat,
+          [note('pop-empty', c.reason ? `Reason: ${c.reason}` : 'No reason recorded.')]);
+      }
+      return buildPopup({ title }, c.cat, [note('pop-empty', 'No station assigned to this cell yet.')]);
     }
     // An operational station has a real location and history; everything else
     // is a proposal, so the location is labelled as such and the install-date /
