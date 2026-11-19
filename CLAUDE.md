@@ -33,7 +33,9 @@ origin and the `mesonet.climate.umt.edu/umrb/` proxy alike — so `API_BASE` mus
 also be listed in the meta CSP `connect-src`, and the API must keep answering
 with CORS `*`. If the host changes, change `MESONET_ORIGIN` and the CSP.
 
-Grid geometry (`data/mt_grids_simple.geojson`, 205 ACE cells keyed by `Cell`)
+Grid geometry (`data/mt_grids_simple.geojson`, 205 ACE cells keyed by `Cell`;
+the internal view swaps in `data/mt_grids_full_simple.geojson`, 294 statewide
+cells with `W-A`…`W-F` columns west of A, row `0` above row 1)
 and the Montana outline are vendored; `data/README.md` has the regeneration
 recipe. The grid's source of truth is `data/umrb-ace-grid.geojson` in the
 umrb-ace repo (Montana cells only) — not `mt_grids.fgb` on data.climate.umt.edu,

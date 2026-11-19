@@ -122,6 +122,23 @@ export default {
     check('?kbd=off sticks in the URL', await k.page.evaluate(() => /kbd=off/.test(location.search)));
     await k.close();
     // A failed load must not leave the stamp on "Updated …" or "Loading…".
+    // The grid follows the view: the public view draws the 205 UMRB cells,
+    // ?internal=1 the 294-cell statewide grid, with the W- columns and J-13.
+    const cellIds = (p) => p.evaluate(() =>
+      [...document.querySelectorAll('#sr-cell-rows tr td:first-child')].map((td) => td.textContent));
+    const pub = await open('', { ready: dataDrew });
+    const pubIds = await cellIds(pub.page);
+    check('public view: 205 UMRB cells, none outside the basin build',
+      pubIds.length === 205 && !pubIds.some((c) => /^W-|^J-13$/.test(c)), pubIds.length);
+    await pub.close();
+    const int = await open('?internal=1', { ready: dataDrew });
+    const intIds = await cellIds(int.page);
+    check('internal view: 294 statewide cells, incl. W-A-1, W-E-0 and J-13',
+      intIds.length === 294 && ['W-A-1', 'W-E-0', 'J-13', 'A-3'].every((c) => intIds.includes(c)), intIds.length);
+    check('internal view: help and table caption name all of Montana', await int.page.evaluate(() =>
+      !document.getElementById('internal-help').hidden
+        && /^Montana grid cells/.test(document.querySelector('#sr-cell-table caption').textContent)));
+    await int.close();
     const stamp = (p) => p.evaluate(() => document.getElementById('refresh-stamp').textContent);
     const f = await open('', { ready: () => document.querySelectorAll('#sr-cell-rows tr').length >= 200 });
     await f.ctx.route('**/stations/status/live**', (r) => r.fulfill({ status: 500, body: '' }));

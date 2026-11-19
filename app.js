@@ -29,7 +29,15 @@
   const STATUS_URL = `${API_BASE}/stations/status/live?type=json`;
   const DASH_URL   = (s) => `${MESONET_ORIGIN}/dash/?s=${encodeURIComponent(s)}`;
   const API_DOCS_URL = `${API_BASE}/docs`;
-  const GRIDS_URL  = 'data/mt_grids_simple.geojson';
+  // The public view draws the 205 UMRB cells, clipped to the basin. The
+  // internal view draws the same lattice over all of Montana: 294 full squares
+  // clipped to the state line, including the cells outside the UMRB build
+  // (W-A-1 … W-F-3 west of column A, and in-lattice cells such as A-3 and
+  // J-13). See data/README.md. Picked once at boot, as activeView is.
+  const GRIDS_URL_BY_VIEW = {
+    public:   'data/mt_grids_simple.geojson',
+    internal: 'data/mt_grids_full_simple.geojson',
+  };
   const STATE_URL  = 'data/mt_state_simple.geojson';
 
   const SEARCH_FLY_ZOOM  = 9;      // zoom when search/deep-link flies to a cell
@@ -339,14 +347,26 @@
   // working, and `?view=internal` is accepted too. Deliberately has no button:
   // the extra construction milestones it exposes are pre-announcement detail,
   // so you reach this view by knowing the URL. Not persisted to localStorage —
-  // a shared machine should never stay in it.
+  // a shared machine should never stay in it. It also swaps the UMRB grid for
+  // the statewide one (GRIDS_URL_BY_VIEW); every non-UMRB cell has no station
+  // yet, so it falls through to 'unassigned' like any empty cell.
   const activeView = (() => {
     if (getLower('view') === 'internal') return 'internal';
     const raw = getLower('internal');
     if (raw != null && !['', '0', 'false', 'no', 'off'].includes(raw)) return 'internal';
     return 'public';
   })();
+  const GRIDS_URL = GRIDS_URL_BY_VIEW[activeView];
   brandFlagEl.hidden = activeView !== 'internal';
+  if (activeView === 'internal') {
+    // The statewide grid is no longer just the UMRB: say so wherever the
+    // page names what the map shows to assistive tech, and in the help.
+    document.getElementById('map').setAttribute('aria-label',
+      'Montana Mesonet station build status map, all of Montana');
+    document.querySelector('#sr-cell-table caption').textContent =
+      'Montana grid cells and their Mesonet buildout status';
+    document.getElementById('internal-help').hidden = false;
+  }
 
   // ?kbd=off disables the single-character '/' shortcut (WCAG 2.1.4 — a
   // speech-input user can misfire it just by dictating a sentence). Read up
