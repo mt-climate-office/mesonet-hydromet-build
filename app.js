@@ -57,10 +57,53 @@
   // Flat stand-in for the CARTO Dark Matter / Positron land color.
   const BASEMAP_BG   = { dark: '#0e1116', light: '#fbfaf8' };
 
-  // Cells whose station is installed and maintained by NDAWN rather than the
-  // Mesonet. They carry no row in the station registry, so they are matched by
-  // cell ID and shown as operational with their own popup note.
-  const NDAWN_CELLS = new Set(['S-2', 'R-2', 'S-3', 'S-4']);
+  // Cells filled by a station that NDAWN (the North Dakota Agricultural
+  // Weather Network, NDSU) installed and maintains, not the Mesonet. They carry
+  // no row in the station registry, so the stations are listed here, read from
+  // each one's NDAWN page (station-info.html?station=<ndawnId>: location,
+  // elevation, period of record) on 2026-11-18. Each is the only NDAWN station
+  // in its cell, and stays in it if moved 0.02° any way. A cell a registry
+  // station also claims stays the registry's.
+  //
+  // NDAWN has no public API, sends no CORS headers and forbids framing, so the
+  // page links out to its two public pages per station and reads nothing.
+  // Elevation is in meters, as the registry's is.
+  const NDAWN_BASE = 'https://ndawn.ndsu.nodak.edu';
+  const NDAWN_STATIONS = [
+    { ndawnId: 101, slug: 'dooley',   name: 'Dooley',   cell: 'S-2', latitude: 48.83369, longitude: -104.38458, elevation: 783, since: '2017-04-13' },
+    { ndawnId: 100, slug: 'redstone', name: 'Redstone', cell: 'R-2', latitude: 48.82451, longitude: -104.84179, elevation: 731, since: '2017-04-12' },
+    { ndawnId: 99,  slug: 'dagmar',   name: 'Dagmar',   cell: 'S-3', latitude: 48.55549, longitude: -104.34760, elevation: 642, since: '2017-04-12' },
+    { ndawnId: 90,  slug: 'froid',    name: 'Froid',    cell: 'S-4', latitude: 48.25794, longitude: -104.49668, elevation: 656, since: '2015-09-17' },
+  ].map((n) => ({
+    // Shaped like a registry row so the dot, search, tooltip and ?station=
+    // paths take it unchanged. The 'ndawn-' prefix keeps the IDs apart from
+    // registry slugs.
+    station: `ndawn-${n.slug}`,
+    name: n.name,
+    status: 'active',
+    ace_grid: n.cell,
+    latitude: n.latitude,
+    longitude: n.longitude,
+    elevation: n.elevation,
+    date_installed: n.since,
+    ndawn: {
+      id: n.ndawnId,
+      stationUrl: `${NDAWN_BASE}/station-info.html?station=${n.ndawnId}`,
+      currentUrl: `${NDAWN_BASE}/current/${n.slug}.html`,
+    },
+  }));
+
+  // A station's name as the page shows it: an NDAWN station says so, since
+  // its dot looks like every other (the family's dots carry no network).
+  function displayName(s) {
+    return s.ndawn ? `${s.name} (NDAWN)` : (s.name || s.station);
+  }
+  // The line under a station's name: its ID and cell. An NDAWN station's ID
+  // is NDAWN's own number, not the page's internal 'ndawn-…' key.
+  function stationSub(s, cell) {
+    const id = s.ndawn ? `NDAWN station ${s.ndawn.id}` : s.station;
+    return cell ? `${id} · cell ${cell}` : `${id} · no cell assigned`;
+  }
 
   // ── The buildout ramp ────────────────────────────────────────────────────
   // These categories are not seven unrelated things — they are one ordered
@@ -190,8 +233,8 @@
     const known = cell ? cellById.get(cell) : null;
     const label = catLabel(known ? known.cat : categoryFor(s.status, activeView));
     MCO.announce(known
-      ? `${s.name || s.station}, ${label}, cell ${cell}.`
-      : `${s.name || s.station}, ${label}, no cell in this grid.`);
+      ? `${displayName(s)}, ${label}, cell ${cell}.`
+      : `${displayName(s)}, ${label}, no cell in this grid.`);
   }
 
   function fmtDate(iso) {
@@ -767,6 +810,10 @@
     _dataNotice = n;
   }
 
+  // Every station the map draws: the registry's rows, then the NDAWN ones.
+  // The NDAWN stations are drawn even when the registry fails to load.
+  function mapStations() { return stations.concat(NDAWN_STATIONS); }
+
   // Build the station lookup and the cell → status join in one pass.
   function indexData() {
     stationById.clear();
@@ -774,7 +821,7 @@
 
     // Station registry, keyed by slug. Rows without usable coordinates are kept
     // (they can still own a cell) but never get a dot.
-    for (const s of stations) {
+    for (const s of mapStations()) {
       if (!s || !s.station) continue;
       const lat = Number(s.latitude), lon = Number(s.longitude);
       s.latitude  = Number.isFinite(lat) ? lat : null;
@@ -784,9 +831,10 @@
 
     // Cell → first station claiming it. First-claim-wins matches the Leaflet
     // map's Array.find(); a cell double-booked in the registry is a data issue
-    // to fix upstream rather than something to guess at here.
+    // to fix upstream rather than something to guess at here. The NDAWN
+    // stations come last, so a registry station in the same cell wins.
     const stationByCell = new Map();
-    for (const s of stations) {
+    for (const s of mapStations()) {
       if (!s || !s.ace_grid) continue;
       const key = normalizeCell(s.ace_grid);
       if (!stationByCell.has(key)) stationByCell.set(key, s);
@@ -795,13 +843,13 @@
     for (const f of (_gridsFC ? _gridsFC.features : [])) {
       const cell = normalizeCell(f.properties.Cell);
       const s = stationByCell.get(cell) || null;
-      const ndawn = !s && NDAWN_CELLS.has(cell);
       cellById.set(cell, {
         cell,
         stationId: s ? s.station : null,
-        // An NDAWN cell has a station on the ground, just not one of ours.
-        cat: ndawn ? 'active' : categoryFor(s && s.status, activeView),
-        ndawn,
+        // An NDAWN station is a row with status 'active', so its cell reads
+        // as operational: a station on the ground, just not one of ours.
+        cat: categoryFor(s && s.status, activeView),
+        ndawn: !!(s && s.ndawn),
         center: featureCenter(f),
       });
     }
@@ -844,7 +892,7 @@
     // rows with no cell assignment are omitted, so the dots always correspond
     // to the buildout the grid is describing. The colocation module groups
     // them and writes the 'stations' source.
-    coloc.setData(stations.filter(s => s && s.status !== 'decommissioned' && s.ace_grid
+    coloc.setData(mapStations().filter(s => s && s.status !== 'decommissioned' && s.ace_grid
       && s.longitude != null && s.latitude != null));
 
     rebuildSrTable(cellFeatures);
@@ -866,7 +914,7 @@
         const cell = f.properties.cell;
         const info = cellById.get(cell);
         const station = info && info.stationId ? stationById.get(info.stationId) : null;
-        const name = station ? (station.name || station.station) : '—';
+        const name = station ? displayName(station) : '—';
         return `<tr><td>${MCO.escapeHTML(cell)}</td>`
              + `<td>${MCO.escapeHTML(catLabel(f.properties.cat))}</td>`
              + `<td>${MCO.escapeHTML(name)}</td></tr>`;
@@ -1080,15 +1128,15 @@
   const SEARCH_MAX_RESULTS = 8;
 
   function populateSearch() {
-    _searchItems = stations
+    _searchItems = mapStations()
       .filter(s => s && s.station && s.status !== 'decommissioned')
       .map((s) => {
         const cell = s.ace_grid ? normalizeCell(s.ace_grid) : null;
         return {
           id: s.station,
-          label: s.name || s.station,
-          keywords: cell ? [cell] : [],
-          meta: `${s.station} · ${cell || 'no cell'}`,
+          label: displayName(s),
+          keywords: [cell, s.ndawn && 'NDAWN'].filter(Boolean),
+          meta: `${s.ndawn ? 'NDAWN' : s.station} · ${cell || 'no cell'}`,
         };
       });
     if (searchBox) searchBox.refresh();
@@ -1233,14 +1281,6 @@
     const s = c.stationId ? stationById.get(c.stationId) : null;
     const title = `Grid cell ${cellId}`;
 
-    if (c.ndawn) {
-      const a = document.createElement('a');
-      a.href = 'https://ndawn.ndsu.nodak.edu/';
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.textContent = 'NDAWN';
-      return buildPopup({ title }, c.cat, [note('pop-note', 'Station installed and maintained by ', a, '.')]);
-    }
     if (!s) {
       return buildPopup({ title }, c.cat, [note('pop-empty', 'No station assigned to this cell yet.')]);
     }
@@ -1249,11 +1289,32 @@
     // dashboard rows are omitted (there is nothing to link to yet).
     const live = c.cat === 'active';
     return buildPopup({
-      title: s.name || s.station,
-      subtitle: `${s.station} · cell ${cellId}`,
+      title: displayName(s),
+      subtitle: stationSub(s, cellId),
       facts: stationFacts(s, live),
-      actions: live ? dashAction(s) : [],
-    }, c.cat);
+      actions: stationActions(s, live),
+    }, c.cat, ndawnNotes(s));
+  }
+
+  // An NDAWN station's detail says who runs it and links out to NDAWN's own
+  // pages in place of the Mesonet dashboard, which has no data for it.
+  function ndawnNotes(s) {
+    if (!s.ndawn) return [];
+    const a = document.createElement('a');
+    a.href = NDAWN_BASE + '/';
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = 'NDAWN';
+    return [note('pop-note', 'Installed and maintained by ', a, ' (North Dakota State University), not the Mesonet.')];
+  }
+  function stationActions(s, live) {
+    if (s.ndawn) {
+      return [
+        { label: 'Current conditions', href: s.ndawn.currentUrl },
+        { label: 'NDAWN station page', href: s.ndawn.stationUrl },
+      ];
+    }
+    return live ? dashAction(s) : [];
   }
 
   // Shared facts for the cell detail above and the station detail below.
@@ -1266,7 +1327,8 @@
     if (live && Number.isFinite(Number(s.elevation))) {
       facts.push(['Elevation', `${Math.round(Number(s.elevation) * 3.281).toLocaleString()} ft`]);
     }
-    if (live && s.date_installed) facts.push(['Installed', fmtDate(s.date_installed)]);
+    // NDAWN publishes a period of record, not an install date.
+    if (live && s.date_installed) facts.push([s.ndawn ? 'Records since' : 'Installed', fmtDate(s.date_installed)]);
     if (s.nwsli_id) facts.push(['NWSLI', s.nwsli_id]);
     return facts;
   }
@@ -1288,17 +1350,17 @@
     // rather than leaving a dot floating with no explanation — it means the
     // station registry and the ACE grid geometry disagree, which is worth
     // someone noticing rather than silently rendering.
-    const notes = [];
+    const notes = ndawnNotes(s);
     if (cell && !known) {
       const strong = document.createElement('strong');
       strong.textContent = `Cell ${cell}`;
       notes.push(note('pop-note', strong, " is not in this map's grid — the station registry and the ACE grid geometry disagree."));
     }
     return buildPopup({
-      title: s.name || s.station,
-      subtitle: cell ? `${s.station} · cell ${cell}` : `${s.station} · no cell assigned`,
+      title: displayName(s),
+      subtitle: stationSub(s, cell),
       facts: stationFacts(s, live),
-      actions: live ? dashAction(s) : [],
+      actions: stationActions(s, live),
     }, cat, notes);
   }
 
@@ -1722,7 +1784,7 @@
       visible: (s) => currentCats().has(stationCat(s)),
       properties: (s) => ({
         station: s.station,
-        name:    s.name || s.station,
+        name:    displayName(s),
         cell:    normalizeCell(s.ace_grid),
         cat:     stationCat(s),
       }),
@@ -1772,8 +1834,8 @@
           const cell = s.ace_grid ? normalizeCell(s.ace_grid) : null;
           const known = cell ? cellById.get(cell) : null;
           return {
-            name: s.name || s.station,
-            sub:  cell ? `${s.station} · cell ${cell}` : `${s.station} · no cell assigned`,
+            name: displayName(s),
+            sub:  stationSub(s, cell),
             line: known
               ? (known.ndawn ? 'Operational (NDAWN)' : catLabel(known.cat))
               : `${catLabel(categoryFor(s.status, activeView))} · cell not in this grid`,
@@ -1784,8 +1846,8 @@
         if (!c) return null;
         const s = c.stationId ? stationById.get(c.stationId) : null;
         return {
-          name: s ? (s.name || s.station) : `Grid cell ${cell}`,
-          sub:  s ? `${s.station} · cell ${cell}` : cell,
+          name: s ? displayName(s) : `Grid cell ${cell}`,
+          sub:  s ? stationSub(s, cell) : cell,
           line: c.ndawn ? 'Operational (NDAWN)' : catLabel(c.cat),
         };
       },

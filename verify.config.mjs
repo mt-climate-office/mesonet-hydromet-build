@@ -139,6 +139,16 @@ export default {
       !document.getElementById('internal-help').hidden
         && /^Montana grid cells/.test(document.querySelector('#sr-cell-table caption').textContent)));
     await int.close();
+    // NDAWN: the four stations NDSU runs in S-2, R-2, S-3, S-4 are dots with
+    // details that link out to NDAWN (no Mesonet dashboard for them).
+    const nd = await open('?station=ndawn-dooley', { ready: () => /Dooley \(NDAWN\)/.test(document.querySelector('.mco-sheet:not([hidden])')?.textContent || '') });
+    check('NDAWN: ?station=ndawn-dooley opens its detail with NDAWN links', await nd.page.evaluate(() => {
+      const links = [...document.querySelectorAll('.mco-sheet .mco-popup-actions a')].map((a) => a.href);
+      return links.includes('https://ndawn.ndsu.nodak.edu/current/dooley.html')
+        && links.includes('https://ndawn.ndsu.nodak.edu/station-info.html?station=101')
+        && [...document.querySelectorAll('#sr-cell-rows tr')].filter((r) => /^(S-2|R-2|S-3|S-4)Operational.*\(NDAWN\)$/.test(r.textContent)).length === 4;
+    }));
+    await nd.close();
     const stamp = (p) => p.evaluate(() => document.getElementById('refresh-stamp').textContent);
     const f = await open('', { ready: () => document.querySelectorAll('#sr-cell-rows tr').length >= 200 });
     await f.ctx.route('**/stations/status/live**', (r) => r.fulfill({ status: 500, body: '' }));

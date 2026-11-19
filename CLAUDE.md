@@ -43,6 +43,13 @@ umrb-ace repo (Montana cells only) — not `mt_grids.fgb` on data.climate.umt.ed
 which is stale. County / watershed / tribal overlays stream as FlatGeobuf from
 `data.climate.umt.edu` on demand.
 
+Four cells (S-2, R-2, S-3, S-4) are filled by NDAWN stations (NDSU), which
+have no registry row: `NDAWN_STATIONS` in `app.js` lists them (location from
+each station's NDAWN page) as registry-shaped rows with IDs `ndawn-<name>`, so
+dots, search, `?station=` and the tooltip treat them like any station. Their
+detail links to NDAWN's pages instead of the dashboard. NDAWN has no API, no
+CORS and forbids framing, so the page only links out.
+
 A station whose `ace_grid` names no drawn cell renders as an orphan with an
 explicit "no drawn cell" note. No registry station does this today (`acesfork`,
 in `E-9`, used to, before the grid moved to umrb-ace); the harness fakes one.
