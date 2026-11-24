@@ -15,7 +15,7 @@ python -m http.server 8000
 ## Deploy
 
 GitHub Pages publishes `main` (repo root). `mesonet.climate.umt.edu/build/` proxies it, so pushing `main` deploys to production.
-A nightly workflow (`.github/workflows/preview.yml`) commits `assets/og-card.png` to `main`. Pull before you push.
+`.github/workflows/pages.yml` deploys it and refreshes the social card (`assets/og-card.jpg`) every 6 hours.
 
 ## URL parameters
 

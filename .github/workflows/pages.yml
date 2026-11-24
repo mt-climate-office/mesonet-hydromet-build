@@ -1,0 +1,25 @@
+# Deploys the site to GitHub Pages with a live social card: the kit's
+# og-preview workflow screenshots the live map into assets/og-card.jpg every
+# 6 hours. The image is never committed. Pages source: GitHub Actions.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  pages:
+    uses: mt-climate-office/mco-web-style/.github/workflows/og-preview.yml@v1.4.0
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: write
+    with:
+      url: https://mt-climate-office.github.io/mesonet-hydromet-build/?theme=light
+      image_url: https://mesonet.climate.umt.edu/build/assets/og-card.jpg
+      ready_selector: '#sr-cell-rows tr:nth-child(200)'
+      seen_keys: mco-build-seen-intro

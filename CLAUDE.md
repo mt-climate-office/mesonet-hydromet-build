@@ -66,13 +66,12 @@ the repo root from `main`, and the same page is reverse-proxied at
 `/api/v2/map/status/` path 301s here from the mesonet-db-rds API, and the
 mco-website UMRB page iframes this URL.
 
-`.github/workflows/preview.yml` runs nightly and **commits `assets/og-card.png`
-back to `main`** — always pull/rebase before pushing, or you race it. Each of
-those commits is itself a Pages redeploy.
-
-`scripts/generate_preview.py` screenshots the live Pages origin (1200×630 layout at 2×, so 2400×1260) with
-`?theme=light`, pre-setting `mco-build-seen-intro` so the intro modal stays
-shut, and waits on the same `#sr-cell-rows` readiness signal as the harness.
+`.github/workflows/pages.yml` deploys `main` and, every 6 hours, redeploys
+with a fresh social card: the kit's og-preview workflow screenshots the live
+Pages origin (1200×630 at 2×, so 2400×1260) into `assets/og-card.jpg`, which
+is never committed. It loads `?theme=light`, pre-sets `mco-build-seen-intro`
+so the intro modal stays shut, and waits for 200 rows in `#sr-cell-rows`, the
+same readiness signal as the harness.
 That param, that localStorage key, and that table id are a contract — renaming
 any of them silently breaks the social card in production.
 
